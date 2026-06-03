@@ -1,0 +1,2633 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LKKO Radio Watch · Kolín TWR</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500;600&display=swap');
+
+:root {
+  --bg:        #0b0c0f;
+  --bg2:       #111318;
+  --bg3:       #181b22;
+  --border:    #252830;
+  --border2:   #2e3240;
+  --accent:    #0077ff;
+  --accent2:   #00c3ff;
+  --green:     #00e676;
+  --orange:    #ff9100;
+  --red:       #ff3d3d;
+  --dim:       #4a5168;
+  --mid:       #7a859e;
+  --text:      #cdd2df;
+  --bright:    #edf0f7;
+  --mono:      'Share Tech Mono', monospace;
+  --sans:      'Barlow', sans-serif;
+  --cond:      'Barlow Condensed', sans-serif;
+
+  --strip-h:   44px;
+  --ops-h:     68px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+}
+
+/* ─── METAR STRIP ─────────────────────────────── */
+#metar-strip {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--strip-h);
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 18px;
+  z-index: 200;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+.strip-label {
+  font-size: 10px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+.strip-val {
+  color: var(--bright);
+  white-space: nowrap;
+}
+.strip-sep { width: 1px; height: 22px; background: var(--border2); flex-shrink: 0; }
+#metar-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color .15s;
+}
+#metar-pill:hover { border-color: var(--accent); }
+#metar-pill.fresh { border-color: #00e67640; }
+#metar-pill.stale { border-color: #ff910040; }
+#metar-pill.old   { border-color: #ff3d3d60; }
+.metar-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); flex-shrink: 0; }
+#metar-pill.fresh .metar-dot { background: var(--green); box-shadow: 0 0 6px var(--green); }
+#metar-pill.stale .metar-dot { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+#metar-pill.old   .metar-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+#clock-utc, #clock-lt { font-size: 15px; color: var(--bright); font-family: var(--mono); }
+#clock-label-lt, #clock-label-utc { font-size: 9px; color: var(--dim); text-transform: uppercase; }
+.clock-block { display: flex; flex-direction: column; align-items: flex-start; }
+
+/* metar detail popup */
+#metar-detail {
+  display: none;
+  position: fixed;
+  top: var(--strip-h);
+  left: 14px;
+  background: var(--bg3);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 12px 16px;
+  z-index: 500;
+  max-width: 420px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  box-shadow: 0 8px 32px #00000080;
+}
+#metar-detail.show { display: block; }
+
+/* ─── MAIN LAYOUT ──────────────────────────────── */
+#page-top {
+  margin-top: var(--strip-h);
+  margin-bottom: var(--ops-h);
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--strip-h) - var(--ops-h));
+}
+
+/* Full viewport: viz (1/3) + aircraft (2/3) */
+#upper-zone {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  height: calc(100vh - var(--strip-h) - var(--ops-h));
+  min-height: 420px;
+  border-bottom: 2px solid var(--border2);
+}
+
+/* 3D viz pane */
+#viz-pane {
+  display: flex;
+  flex-direction: column;
+  border-right: 2px solid var(--border2);
+  overflow: hidden;
+}
+#viz-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.pane-title {
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--bright);
+}
+.pane-sub { font-size: 10px; color: var(--dim); margin-left: 8px; }
+.view-btns { display: flex; gap: 4px; }
+.vbtn {
+  padding: 3px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--bg3);
+  color: var(--mid);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all .12s;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+.vbtn:hover { border-color: var(--accent2); color: var(--accent2); }
+.vbtn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+#viz3d {
+  flex: 1;
+  background: #060709;
+  position: relative;
+  overflow: hidden;
+}
+#viz3d canvas { display: block; outline: none; width: 100% !important; height: 100% !important; }
+#viz-legend {
+  display: flex;
+  gap: 14px;
+  padding: 5px 12px;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--mid);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.leg-item { display: flex; align-items: center; gap: 5px; }
+.leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ─── AIRCRAFT LIST PANE ─── COMPACT CODE-LINE STYLE ───────────────────── */
+#ac-pane {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+#ac-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#ac-list-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  font-family: var(--mono);
+}
+#ac-list-scroll::-webkit-scrollbar { width: 3px; }
+#ac-list-scroll::-webkit-scrollbar-track { background: transparent; }
+#ac-list-scroll::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* Column header */
+.ac-list-header {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 2px 8px;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border2);
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  flex-shrink: 0;
+}
+
+.ac-card {
+  background: var(--bg);
+  border: none;
+  border-left: 3px solid var(--green);
+  border-bottom: 1px solid #1a1d2240;
+  border-radius: 0;
+  padding: 6px 10px;
+  margin-bottom: 0;
+  transition: background .1s;
+  cursor: default;
+}
+.ac-card:nth-child(even) { background: #0e1119; }
+.ac-card:nth-child(even):hover { background: #161920; }
+.ac-card:nth-child(odd) { background: var(--bg); }
+.ac-card:nth-child(odd):hover { background: #13161f; }
+.ac-card.selected { background: #0a1520; border-left-color: var(--accent2); }
+.ac-card.warning { border-left-color: var(--orange); background: #0f0a04; }
+.ac-card.alert   { border-left-color: var(--red); background: #0f0404; animation: pulse-card 1.5s infinite; }
+@keyframes pulse-card {
+  0%,100% { background: #0f0404; }
+  50%      { background: #1a0808; }
+}
+@keyframes flash-reset {
+  0%, 30% { background: var(--green) !important; border-left-color: #fff !important; }
+  100%    { }
+}
+.ac-card.flash { animation: flash-reset 0.55s ease-out forwards !important; }
+.ac-card.flash .ac-reg,
+.ac-card.flash .ac-countdown,
+.ac-card.flash .ac-type-sm { color: #002210 !important; }
+
+@keyframes flash-delete {
+  0%     { background: var(--red) !important; border-left-color: #fff !important; opacity: 1; }
+  60%    { background: #3a0808 !important; opacity: 0.6; }
+  100%   { opacity: 0; transform: scaleY(0.7); }
+}
+.ac-card.flash-delete {
+  animation: flash-delete 0.5s ease-out forwards !important;
+  pointer-events: none;
+}
+.ac-card.flash-delete .ac-reg,
+.ac-card.flash-delete .ac-countdown,
+.ac-card.flash-delete .ac-type-sm { color: #fff !important; }
+
+/* Single-line layout */
+.ac-line { display: flex; align-items: center; gap: 10px; width: 100%; min-width: 0; }
+.ac-idx  { font-size: 10px; color: var(--border2); min-width: 16px; text-align: right; user-select: none; }
+.ac-reg  { font-family: var(--mono); font-size: 14px; color: var(--accent2); font-weight: 700; min-width: 88px; letter-spacing: .5px; }
+.ac-type-sm { font-family: var(--mono); font-size: 13px; color: var(--mid); min-width: 64px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ac-times { font-size: 11px; color: var(--dim); font-family: var(--mono); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ac-note-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 0 2px;
+  min-width: 0;
+  width: 90px;
+  max-width: 130px;
+}
+.ac-note-input:focus { outline: none; border-bottom: 1px solid var(--accent); color: var(--text); }
+.ac-note-input.has-value { color: var(--mid); border-bottom: 1px solid #0077ff30; }
+.ac-note-input::placeholder { color: var(--border2); font-size: 10px; }
+.ac-countdown {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+  min-width: 46px;
+  text-align: right;
+}
+.ac-countdown.warning { color: var(--orange); }
+.ac-countdown.alert   { color: var(--red); }
+.ac-countdown { cursor: pointer; }
+.ac-countdown:hover { text-decoration: underline dotted; }
+.timer-edit-input {
+  width: 52px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--accent2);
+  color: var(--accent2);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+  outline: none;
+  padding: 0;
+  min-width: 0;
+}
+.ac-contact-btn {
+  padding: 2px 7px;
+  background: transparent;
+  color: var(--green);
+  border: 1px solid #00e67630;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .1s;
+  white-space: nowrap;
+  line-height: 18px;
+}
+.ac-contact-btn:hover { background: var(--green); color: #000; border-color: var(--green); }
+.ac-del-btn {
+  padding: 2px 5px;
+  background: transparent;
+  color: var(--border2);
+  border: 1px solid transparent;
+  border-radius: 2px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .1s;
+  line-height: 18px;
+}
+.ac-del-btn:hover { border-color: var(--red); color: var(--red); }
+
+.undo-btn {
+  display: none;
+  padding: 1px 8px;
+  background: #1a0808;
+  color: var(--orange);
+  border: 1px solid #ff910050;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  animation: undo-appear 0.2s ease-out;
+}
+.undo-btn:hover { background: var(--orange); color: #000; border-color: var(--orange); }
+@keyframes undo-appear {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.sc-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 5px 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  margin-bottom: 3px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.sc-label { color: var(--text); flex: 1; }
+.sc-key {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  padding: 1px 7px;
+  color: var(--accent2);
+  font-family: var(--mono);
+  font-size: 11px;
+  min-width: 90px;
+  text-align: center;
+}
+.sc-key.recording {
+  border-color: var(--orange);
+  color: var(--orange);
+  animation: sc-blink .6s infinite;
+}
+@keyframes sc-blink {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+.sc-edit-btn {
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all .1s;
+}
+.sc-edit-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.sc-fixed { color: var(--dim); font-size: 10px; margin-left: 6px; }
+.ac-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* ─── SCROLL ZONE (below upper) ───────────────── */
+#scroll-zone {
+  background: var(--bg);
+  padding: 0 0 120px 0;
+}
+
+/* airport diagram + notes — aligned pair */
+#layout-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  align-items: start;
+  border-bottom: 1px solid var(--border);
+}
+#airport-diagram-pane {
+  padding: 18px 20px;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.section-title {
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--mid);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+#airport-img {
+  max-width: 100%;
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  filter: brightness(.9) contrast(1.1);
+}
+#notes-pane {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+#notepad {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 15px;
+  padding: 10px 12px;
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.6;
+  outline: none;
+}
+#notepad:focus { border-color: var(--accent); }
+
+/* Emergency + contacts */
+#bottom-zone {
+  padding: 20px 24px;
+}
+.emg-panel {
+  background: #150a0a;
+  border: 1px solid #3a1515;
+  border-left: 4px solid var(--red);
+  border-radius: 4px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+}
+.emg-title {
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+.emg-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 8px; }
+.emg-card {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.emg-name { font-size: 12px; color: var(--mid); }
+.emg-name small { display: block; font-size: 10px; color: var(--dim); margin-top: 1px; }
+.emg-number { font-family: var(--mono); font-size: 18px; color: var(--red); font-weight: 700; white-space: nowrap; }
+.emg-number.big { font-size: 24px; }
+.emg-fic { grid-column: span 2; border-color: #3a1515; }
+
+.contacts-section {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 10px;
+}
+.contact-card {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 10px 12px;
+}
+.cc-name { font-family: var(--cond); font-size: 13px; font-weight: 700; color: var(--accent2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+.cc-row { display: flex; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+.cc-lbl { color: var(--dim); }
+.cc-val { font-family: var(--mono); color: var(--text); }
+
+/* ─── OPERATIONS BAR (fixed bottom) ───────────── */
+#ops-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: var(--ops-h);
+  background: var(--bg2);
+  border-top: 2px solid var(--accent);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 10px;
+  z-index: 300;
+  box-shadow: 0 -4px 20px #00000080;
+}
+.ops-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 14px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+  color: var(--mid);
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+  min-width: 56px;
+  height: 48px;
+}
+.ops-btn:hover { border-color: var(--accent2); color: var(--accent2); background: var(--bg3); }
+.ops-btn .btn-ico { font-size: 16px; }
+.ops-btn .btn-key {
+  font-size: 9px;
+  color: var(--border2);
+  font-family: var(--mono);
+}
+.ops-btn:hover .btn-key { color: var(--accent); }
+
+/* center input area */
+#ac-input-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 6px 10px;
+  position: relative;
+  max-width: 540px;
+  margin: 0 auto;
+  width: 100%;
+}
+#ac-input-area:focus-within { border-color: var(--accent); }
+#reg-input, #type-input {
+  background: transparent;
+  border: none;
+  color: var(--bright);
+  font-family: var(--mono);
+  font-size: 15px;
+  outline: none;
+}
+#reg-input { flex: 2; min-width: 0; text-transform: uppercase; }
+#type-input { flex: 1.2; min-width: 0; border-left: 1px solid var(--border2); padding-left: 8px; text-transform: none; }
+#reg-input::placeholder, #type-input::placeholder { color: var(--dim); text-transform: none; font-size: 12px; }
+#add-ac-btn {
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  transition: background .1s;
+  white-space: nowrap;
+}
+#add-ac-btn:hover { background: var(--accent2); }
+
+/* Suggestions dropdown */
+#suggestions {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--bg3);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  overflow: hidden;
+  z-index: 400;
+  box-shadow: 0 -8px 24px #00000080;
+}
+.sug-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  transition: background .1s;
+}
+.sug-item:last-child { border-bottom: none; }
+.sug-item:hover, .sug-item.highlighted { background: var(--accent); color: #fff; }
+.sug-reg { font-weight: 700; }
+.sug-type { font-size: 11px; color: var(--mid); }
+.sug-item:hover .sug-type, .sug-item.highlighted .sug-type { color: #fff; }
+
+/* ─── OVERLAYS ─────────────────────────────────── */
+.overlay-bg {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #00000088;
+  z-index: 600;
+  backdrop-filter: blur(2px);
+}
+.overlay-bg.show { display: flex; align-items: center; justify-content: center; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 20px 24px;
+  width: 520px;
+  max-width: 95vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 16px 48px #000000c0;
+}
+.modal-title {
+  font-family: var(--cond);
+  font-size: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--bright);
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-close {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--mid);
+  border-radius: 3px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all .1s;
+}
+.modal-close:hover { border-color: var(--red); color: var(--red); }
+
+/* TRA modal */
+.tra-grid { display: flex; flex-direction: column; gap: 0; margin-top: 4px; }
+.tra-group-header {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 6px 4px 6px 2px;
+  border-bottom: 1px solid var(--border2);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tra-group-label { flex-shrink: 0; }
+.tra-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.tra-all-fl-in {
+  width: 46px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  color: var(--bright);
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 5px;
+  text-align: center;
+  outline: none;
+}
+.tra-all-fl-in:focus { border-color: var(--accent2); }
+.tra-all-fl-in.invalid { border-color: var(--red); }
+.tra-all-act-btn {
+  padding: 2px 8px;
+  background: #05200f;
+  color: var(--green);
+  border: 1px solid #00e67640;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .1s;
+  text-transform: uppercase;
+}
+.tra-all-act-btn:hover { background: var(--green); color: #000; border-color: var(--green); }
+.tra-all-deact-btn {
+  padding: 2px 8px;
+  background: #200505;
+  color: var(--red);
+  border: 1px solid #ff3d3d30;
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .1s;
+  text-transform: uppercase;
+}
+.tra-all-deact-btn:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.tra-group-grid { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+.tra-group-sep { height: 1px; background: var(--border); margin: 8px 0; }
+.tra-card {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tra-card.active { background: #05150d; border-color: var(--green); }
+.tra-head { display: flex; align-items: baseline; gap: 8px; min-width: 52px; }
+.tra-id { font-family: var(--mono); font-size: 14px; color: var(--bright); font-weight: 700; }
+.tra-maxfl { font-size: 10px; color: var(--dim); }
+.tra-status { font-size: 11px; color: var(--mid); flex: 1; }
+.tra-card.active .tra-status { color: var(--green); }
+.tra-ctrl { display: flex; gap: 5px; flex-shrink: 0; }
+.tra-fl-in {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  color: var(--bright);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 5px 8px;
+  text-transform: uppercase;
+  outline: none;
+  min-width: 0;
+}
+.tra-fl-in:focus { border-color: var(--accent); }
+.tra-fl-in.invalid { border-color: var(--red); }
+.tra-act-btn {
+  padding: 5px 10px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--cond);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background .1s;
+}
+.tra-act-btn:hover { background: var(--accent2); }
+.tra-deact-btn {
+  width: 100%;
+  padding: 5px 10px;
+  background: #2a0a0a;
+  color: var(--red);
+  border: 1px solid #3a1010;
+  border-radius: 3px;
+  font-family: var(--cond);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all .1s;
+}
+.tra-deact-btn:hover { background: var(--red); color: #fff; }
+.phraseology-btn {
+  width: 100%;
+  padding: 6px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--mid);
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 3px;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 10px;
+  transition: all .1s;
+}
+.phraseology-btn:hover { border-color: var(--accent); color: var(--accent2); }
+.phraseology-box {
+  display: none;
+  background: #080d18;
+  border-left: 3px solid var(--accent);
+  border-radius: 3px;
+  padding: 10px 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.phraseology-box.show { display: block; }
+.phraseology-box strong { color: var(--accent2); display: block; margin-bottom: 2px; }
+
+/* Settings modal */
+.settings-section { margin-bottom: 16px; }
+.settings-label {
+  font-family: var(--cond);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--dim);
+  margin-bottom: 8px;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  margin-bottom: 4px;
+}
+.settings-row-label { font-size: 13px; color: var(--text); }
+.settings-num {
+  width: 70px;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  color: var(--bright);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 4px 8px;
+  text-align: right;
+  outline: none;
+}
+.settings-num:focus { border-color: var(--accent); }
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  margin-bottom: 4px;
+}
+.toggle-row-label { font-size: 13px; color: var(--text); }
+.pill-btn {
+  padding: 5px 14px;
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 3px;
+  cursor: pointer;
+  text-transform: uppercase;
+  border: 1px solid var(--border2);
+  background: var(--bg);
+  color: var(--mid);
+  transition: all .1s;
+}
+.pill-btn:hover { border-color: var(--accent2); color: var(--accent2); }
+.pill-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.notif-status {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-family: var(--mono);
+}
+.notif-status.on  { background: #05150d; color: var(--green); border: 1px solid #00e67640; }
+.notif-status.off { background: #1a120a; color: var(--orange); border: 1px solid #ff910040; }
+
+/* Presets modal */
+.preset-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.preset-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 8px 12px;
+}
+.preset-item-reg { font-family: var(--mono); font-size: 14px; color: var(--bright); flex: 1; }
+.preset-item-type { font-size: 12px; color: var(--mid); flex: 1; }
+.preset-del-btn {
+  padding: 3px 8px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--dim);
+  border-radius: 3px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all .1s;
+}
+.preset-del-btn:hover { border-color: var(--red); color: var(--red); }
+.add-preset-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.preset-in {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  color: var(--bright);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 6px 10px;
+  text-transform: uppercase;
+  outline: none;
+  min-width: 0;
+}
+.preset-in:focus { border-color: var(--accent); }
+.preset-in::placeholder { text-transform: none; color: var(--dim); font-size: 11px; }
+.add-preset-btn {
+  padding: 6px 14px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 3px;
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background .1s;
+  white-space: nowrap;
+}
+.add-preset-btn:hover { background: var(--accent2); }
+
+/* Keyboard shortcut indicator */
+.kbd {
+  display: inline-block;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 3px;
+  padding: 0 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--dim);
+}
+
+/* Scrollbar global */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  METAR STRIP                                   -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="metar-strip">
+  <div style="font-family:var(--cond);font-size:15px;font-weight:700;letter-spacing:2px;color:var(--bright);margin-right:4px;">LKKO</div>
+  <div class="strip-sep"></div>
+  <div class="clock-block">
+    <span class="clock-label-lt strip-label">LT</span>
+    <span id="clock-lt" class="strip-val">--:--:--</span>
+  </div>
+  <div class="strip-sep"></div>
+  <div class="clock-block">
+    <span class="clock-label-utc strip-label">UTC</span>
+    <span id="clock-utc" class="strip-val">--:--:--</span>
+  </div>
+  <div class="strip-sep"></div>
+
+  <div id="metar-pill" onclick="toggleMetarDetail()" title="Click for full METAR">
+    <div class="metar-dot"></div>
+    <span class="strip-label" style="margin-right:2px;">LKCV</span>
+    <span id="metar-data" class="strip-val">načítání…</span>
+    <span id="metar-age" style="font-size:10px;color:var(--dim);margin-left:4px;"></span>
+  </div>
+
+  <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+    <span id="notifStatus" class="notif-status off" style="font-size:10px;">NOTIF: OFF</span>
+    <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent2);letter-spacing:3px;padding:0 6px;">129.155</div>
+  </div>
+</div>
+
+<!-- METAR detail popup -->
+<div id="metar-detail">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+    <strong style="color:var(--bright);">METAR LKCV (Čáslav)</strong>
+    <div style="display:flex;gap:6px;">
+      <button onclick="fetchMetar(true)" style="padding:3px 8px;font-size:11px;background:var(--bg3);border:1px solid var(--border2);color:var(--mid);border-radius:3px;cursor:pointer;font-family:var(--mono);">↻ refresh</button>
+      <button onclick="toggleMetarDetail()" style="padding:3px 8px;font-size:11px;background:var(--bg3);border:1px solid var(--border2);color:var(--mid);border-radius:3px;cursor:pointer;font-family:var(--mono);">✕</button>
+    </div>
+  </div>
+  <div id="metar-full" style="color:var(--text);line-height:1.6;word-break:break-all;"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  PAGE TOP (upper 3/4 + scroll zone)            -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="page-top">
+
+  <!-- UPPER ZONE -->
+  <div id="upper-zone">
+
+    <!-- 3D VIZ PANE -->
+    <div id="viz-pane">
+      <div id="viz-topbar">
+        <div class="view-btns">
+          <button class="vbtn active" id="lbl-cycle" onclick="cycleLabelMode()" title="Cycle label display">Labels On</button>
+        </div>
+        <div style="flex:1;"></div>
+        <div class="view-btns">
+          <button class="vbtn active" id="btn-view-toggle" onclick="toggleView()">ISO</button>
+        </div>
+      </div>
+      <div id="viz3d"></div>
+      <div id="viz-legend">
+        <div class="leg-item"><span class="leg-dot" style="background:var(--green)"></span>Active — approved FL</div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--mid)"></span>Inactive — full ceiling</div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--accent)"></span>LKKO Airport</div>
+        <div style="margin-left:auto;position:relative;" id="ftm-wrap">
+          <div id="ftm-panel" style="display:none;position:absolute;bottom:calc(100% + 4px);right:0;background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;display:none;align-items:center;gap:5px;white-space:nowrap;box-shadow:0 -4px 12px #00000060;z-index:50;">
+            <input id="ftm-ft" type="number" placeholder="ft" style="width:72px;background:var(--bg);border:1px solid var(--border2);border-radius:3px;color:var(--bright);font-family:var(--mono);font-size:12px;padding:3px 6px;outline:none;text-align:right;" oninput="ftmConvert('ft')">
+            <span style="color:var(--dim);font-size:10px;font-family:var(--mono);">ft</span>
+            <span style="color:var(--border2);font-size:10px;">⇄</span>
+            <input id="ftm-m" type="number" placeholder="m" style="width:64px;background:var(--bg);border:1px solid var(--border2);border-radius:3px;color:var(--bright);font-family:var(--mono);font-size:12px;padding:3px 6px;outline:none;text-align:right;" oninput="ftmConvert('m')">
+            <span style="color:var(--dim);font-size:10px;font-family:var(--mono);">m</span>
+          </div>
+          <button id="ftm-btn" onclick="toggleFtm()" style="background:transparent;border:1px solid var(--border2);border-radius:3px;padding:1px 7px;font-family:var(--mono);font-size:10px;color:var(--dim);cursor:pointer;transition:all .12s;letter-spacing:.5px;" title="ft ↔ m converter">ft↔m</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- AIRCRAFT LIST PANE -->
+    <div id="ac-pane">
+      <div id="ac-topbar">
+        <span class="pane-title">Active Traffic</span>
+        <span id="ac-count" style="font-family:var(--mono);font-size:11px;color:var(--dim);">0 AC</span>
+      </div>
+      <div style="padding:2px 8px 2px 8px;background:var(--bg2);border-bottom:1px solid var(--border);font-size:9px;font-family:var(--mono);color:var(--dim);display:flex;gap:6px;flex-shrink:0;letter-spacing:.5px;text-transform:uppercase;">
+        <span style="min-width:14px;">#</span>
+        <span style="min-width:72px;">Reg</span>
+        <span style="min-width:54px;">Type</span>
+        <span style="flex:1;">Add'd · Last CTX</span>
+        <span style="width:80px;">Note</span>
+        <span style="min-width:40px;text-align:right;">T–left</span>
+        <span style="width:42px;"></span>
+      </div>
+      <div id="ac-list-scroll">
+        <div id="list"></div>
+      </div>
+
+      <!-- Legend strip inside ac pane -->
+      <div style="padding:3px 8px;background:var(--bg2);border-top:1px solid var(--border);font-size:9px;font-family:var(--mono);display:flex;gap:10px;color:var(--dim);flex-shrink:0;">
+        <span style="color:var(--green)">● OK</span>
+        <span style="color:var(--orange)">● WARN</span>
+        <span style="color:var(--red)">● ALARM</span>
+        <button class="undo-btn" id="undo-btn" onclick="undoDelete()" title="Undo last deletion">↩ UNDO</button>
+        <span style="margin-left:auto;font-size:9px;">List Edit · ↑↓ nav · Shift+↵ contact · Enter exit</span>
+      </div>
+    </div>
+
+  </div><!-- /upper-zone -->
+
+  <!-- SCROLL ZONE -->
+  <div id="scroll-zone">
+    <div id="layout-row">
+      <div id="airport-diagram-pane">
+        <div class="section-title">LKKO — Kolín Airport Diagram</div>
+        <img id="airport-img" src="" alt="LKKO airport diagram">
+      </div>
+      <div id="notes-pane">
+        <div class="section-title">Operations Notes</div>
+        <textarea id="notepad" spellcheck="false" placeholder="Type notes here…&#10;&#10;This area works like a fixed-size notepad.&#10;Useful for frequencies, clearances, ATIS, shift notes…"></textarea>
+      </div>
+    </div>
+
+    <!-- Emergency + Contacts -->
+    <div id="bottom-zone">
+      <div class="section-title" style="margin-bottom:14px;">Emergency &amp; Useful Contacts</div>
+
+      <div class="emg-panel">
+        <div class="emg-title">🚨 Emergency Contacts</div>
+        <div class="emg-grid">
+          <div class="emg-card emg-fic">
+            <div class="emg-name">
+              <strong style="color:#ff8a80;">FIC Praha — INCERFA / ALERFA / DETRESFA</strong>
+              <small>OPI must notify when aircraft in contact enters any distress phase</small>
+            </div>
+            <div class="emg-number">220 374 393</div>
+          </div>
+          <div class="emg-card"><div class="emg-name">Hasičský záchranný sbor</div><div class="emg-number big">150</div></div>
+          <div class="emg-card"><div class="emg-name">Zdravotnická záchranná služba</div><div class="emg-number big">155</div></div>
+          <div class="emg-card"><div class="emg-name">Policie ČR</div><div class="emg-number big">158</div></div>
+          <div class="emg-card"><div class="emg-name">Jednotná tísňová linka</div><div class="emg-number big">112</div></div>
+          <div class="emg-card"><div class="emg-name">RCC Praha<small>Záchranné koordinační středisko</small></div><div class="emg-number">220 374 452</div></div>
+          <div class="emg-card"><div class="emg-name">ÚZPLN — sekretariát<small>Letecké nehody</small></div><div class="emg-number">266 199 231</div></div>
+          <div class="emg-card emg-fic" style="border-color:#3a1515;"><div class="emg-name">ÚZPLN — hotovost 24/7<small>Hlášení nehod / incidentů</small></div><div class="emg-number">724 300 800</div></div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-bottom:10px;">ATC Contacts — SLPS Čáslav</div>
+      <div class="contacts-section">
+        <div class="contact-card">
+          <div class="cc-name">MAPP Čáslav — Čáslav RADAR</div>
+          <div class="cc-row"><span class="cc-lbl">FREQ</span><span class="cc-val">130.280 MHz (H24)</span></div>
+          <div class="cc-row"><span class="cc-lbl">TEL</span><span class="cc-val">973 376 953</span></div>
+        </div>
+        <div class="contact-card">
+          <div class="cc-name">MTWR Čáslav — Čáslav TOWER</div>
+          <div class="cc-row"><span class="cc-lbl">FREQ</span><span class="cc-val">134.205 MHz (H24)</span></div>
+          <div class="cc-row"><span class="cc-lbl">TEL</span><span class="cc-val">973 376 952</span></div>
+          <div class="cc-row"><span class="cc-lbl">BKP</span><span class="cc-val">973 376 956</span></div>
+        </div>
+        <div class="contact-card">
+          <div class="cc-name">Náčelník SLPS Čáslav</div>
+          <div class="cc-row"><span class="cc-lbl">mjr. Ing. V. Brandejs</span><span class="cc-val"></span></div>
+          <div class="cc-row"><span class="cc-lbl">TEL</span><span class="cc-val">973 376 950</span></div>
+          <div class="cc-row"><span class="cc-lbl">MOB</span><span class="cc-val">602 585 192</span></div>
+        </div>
+        <div class="contact-card">
+          <div class="cc-name">Kolín RADIO (Local)</div>
+          <div class="cc-row"><span class="cc-lbl">FREQ</span><span class="cc-val">129.155 MHz (HO)</span></div>
+          <div class="cc-row"><span class="cc-lbl">TEL</span><span class="cc-val">321 720 844</span></div>
+          <div class="cc-row"><span class="cc-lbl">VLP dep.</span><span class="cc-val">777 854 674</span></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /scroll-zone -->
+
+</div><!-- /page-top -->
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  OPERATIONS BAR                                -->
+<!-- ══════════════════════════════════════════════ -->
+<div id="ops-bar">
+  <!-- LEFT BUTTONS -->
+  <button class="ops-btn" onclick="openTra()" title="Airspace Activations">
+    <span class="btn-ico">🛡</span>
+    <span>TRA</span>
+  </button>
+  <button class="ops-btn" id="view-toggle-btn" onclick="cycleView()" title="Switch view">
+    <span class="btn-ico">👁</span>
+    <span>VIEW</span>
+  </button>
+
+  <!-- CENTER INPUT -->
+  <div id="ac-input-area">
+    <div id="suggestions"></div>
+    <input type="text" id="reg-input" placeholder="Registration (e.g. OK-ABC)" maxlength="10" autocomplete="off">
+    <input type="text" id="type-input" placeholder="Type (optional)" maxlength="15" autocomplete="off">
+    <button id="add-ac-btn" onclick="addAircraft()">+ Add</button>
+  </div>
+
+  <!-- RIGHT BUTTONS -->
+  <button class="ops-btn" onclick="openSettings()" title="Settings & notifications">
+    <span class="btn-ico">⚙</span>
+    <span>SETUP</span>
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  MODALS                                        -->
+<!-- ══════════════════════════════════════════════ -->
+
+<!-- TRA Modal -->
+<div class="overlay-bg" id="tra-overlay" onclick="if(event.target===this)closeTra()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">
+      TRA GA Kolín — Airspace Activation
+      <button class="modal-close" onclick="closeTra()">✕ close</button>
+    </div>
+    <button class="phraseology-btn" onclick="togglePhraseology()">📻 Phraseology Reference</button>
+    <div class="phraseology-box" id="phraseology">
+      <strong>Request (Kolín RADIO → Čáslav RADAR):</strong>
+      „Žádám aktivovat TRACVKO[X] v čase [UTC], do letové hladiny [FL], činnost MÍSTNÍ PROVOZ"<br><br>
+      <strong>Čáslav response variants:</strong>
+      „Aktivace TRACVKO[X] schválena od [UTC], do letové hladiny [FL], QNH [QNH]"<br>
+      nebo „... pouze do [X] TISÍC stop AMSL, QNH [QNH]"<br>
+      nebo „TRACVKO[X] NEGATIV"<br><br>
+      <strong>Deactivation confirmation:</strong>
+      „TRACVKO[X] deaktivován" nebo „TRACVKO[X] deaktivován v [UTC]"
+    </div>
+    <div class="tra-grid" id="traGrid"></div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="overlay-bg" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">
+      Settings
+      <button class="modal-close" onclick="closeSettings()">✕ close</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Contact Timer Limits</div>
+      <div class="settings-row">
+        <span class="settings-row-label">Contact limit (minutes)</span>
+        <input type="number" class="settings-num" id="limitMinutes" value="30" min="1" max="120" onchange="saveSettings()">
+      </div>
+      <div class="settings-row">
+        <span class="settings-row-label">Warning before limit (minutes)</span>
+        <input type="number" class="settings-num" id="warningMinutes" value="5" min="1" max="30" onchange="saveSettings()">
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Notifications</div>
+      <div class="toggle-row">
+        <span class="toggle-row-label">Browser Notifications</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="notifStatusModal" class="notif-status off" style="font-size:11px;">OFF</span>
+          <button class="pill-btn" onclick="requestNotifications()">Enable</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Appearance</div>
+      <div class="toggle-row">
+        <span class="toggle-row-label">Theme</span>
+        <button class="pill-btn active" id="theme-btn" onclick="toggleTheme()">Dark</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label">Aircraft Presets <kbd class="kbd">F2</kbd></div>
+      <div class="settings-row" style="cursor:pointer;" onclick="closeSettings();openPresets()">
+        <span class="settings-row-label">Manage Presets (quick-add buttons)</span>
+        <span style="color:var(--accent2);font-family:var(--mono);font-size:12px;">Open →</span>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-label" style="display:flex;justify-content:space-between;align-items:center;">
+        Keyboard Shortcuts
+        <button onclick="resetShortcuts()" style="background:transparent;border:1px solid var(--border2);border-radius:2px;color:var(--dim);font-family:var(--mono);font-size:10px;padding:1px 7px;cursor:pointer;" title="Restore defaults">↺ reset</button>
+      </div>
+      <div id="shortcut-settings"></div>
+      <div style="margin-top:6px;font-size:10px;color:var(--dim);font-family:var(--mono);">On Windows: use Ctrl+1/2/3 if F-keys require Fn. Click a key badge to rebind.</div>
+    </div>
+  </div>
+</div>
+
+<!-- Presets Modal -->
+<div class="overlay-bg" id="presets-overlay" onclick="if(event.target===this)closePresets()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">
+      Aircraft Presets
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button onclick="clearAllPresets()" style="background:transparent;border:1px solid #ff3d3d40;border-radius:2px;color:var(--red);font-family:var(--mono);font-size:10px;padding:2px 8px;cursor:pointer;transition:all .1s;white-space:nowrap;" onmouseover="this.style.background='var(--red)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--red)'">✕ Clear All</button>
+        <button class="modal-close" onclick="closePresets()">✕ close</button>
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--mid);margin-bottom:12px;font-family:var(--mono);">
+      Presets appear as autocomplete suggestions when typing in the add-aircraft bar.<br>
+      If a preset aircraft is already active, selecting it resets its contact timer.
+    </div>
+    <div style="margin-bottom:10px;">
+      <button onclick="loadLkkoPresetPack()" style="width:100%;padding:7px 12px;background:#05150d;border:1px solid #00e67640;border-radius:3px;color:var(--green);font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;text-align:left;letter-spacing:.5px;transition:all .12s;" onmouseover="this.style.background='#0a2a1a';this.style.borderColor='var(--green)'" onmouseout="this.style.background='#05150d';this.style.borderColor='#00e67640'">
+        ▼ Load LKKO Preset Pack <span style="font-weight:400;color:var(--dim);">(10 aircraft · replaces duplicates)</span>
+      </button>
+    </div>
+    <div class="preset-list" id="preset-list"></div>
+    <div class="add-preset-form">
+      <input type="text" class="preset-in" id="preset-reg-in" placeholder="Registration (OK-ABC)" maxlength="10">
+      <input type="text" class="preset-in" id="preset-type-in" placeholder="Type (optional)" maxlength="20">
+      <button class="add-preset-btn" onclick="addPreset()">+ Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  SCRIPTS                                       -->
+<!-- ══════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+
+// ─── AIRPORT IMAGE ─────────────────────────────────────────────────────────
+// Load image from uploads if available (running locally will just not show it)
+document.getElementById('airport-img').src = '';
+// Try to load from same directory
+(function(){
+  const img = document.getElementById('airport-img');
+  // The image file should be placed next to this HTML file as "airport_diagram.png"
+  img.onerror = () => { img.style.display = 'none'; img.parentElement.innerHTML += '<div style="color:var(--dim);font-family:var(--mono);font-size:11px;padding:20px;text-align:center;">Place airport_diagram.png<br>next to this HTML file</div>'; };
+  img.src = '1777491427620_image.png';
+})();
+
+// ─── NOTEPAD ───────────────────────────────────────────────────────────────
+(function(){
+  const ta = document.getElementById('notepad');
+  const LINES = 22;
+  const LINE_H = 1.55;
+  // Fixed height approach: count lines on input and block if at limit
+  function linesOf(txt) { return txt.split('\n').length; }
+  ta.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const lines = linesOf(ta.value);
+      if (lines >= LINES) { e.preventDefault(); return; }
+    }
+  });
+  ta.addEventListener('input', () => {
+    const lines = ta.value.split('\n');
+    if (lines.length > LINES) {
+      ta.value = lines.slice(0, LINES).join('\n');
+    }
+    // also trim each line to ~80 chars
+    const trimmed = ta.value.split('\n').map(l => l.slice(0, 80)).join('\n');
+    if (trimmed !== ta.value) ta.value = trimmed;
+  });
+  // Restore from localStorage
+  ta.value = localStorage.getItem('rw_notes') || '';
+  ta.addEventListener('input', () => localStorage.setItem('rw_notes', ta.value));
+  // Set height based on lines — aspect-ratio:1/1 handles actual sizing
+  // ta.style.height = (LINES * LINE_H * 13 + 22) + 'px';
+})();
+
+// ─── CLOCK ─────────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock-lt').textContent = now.toLocaleTimeString('cs-CZ', { hour12: false });
+  document.getElementById('clock-utc').textContent = now.toLocaleTimeString('cs-CZ', { hour12: false, timeZone: 'UTC' });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── METAR ────────────────────────────────────────────────────────────────
+let metarCache = { raw: '', fetchedAt: 0, observedAt: 0, parsed: null };
+function parseMetar(raw) {
+  if (!raw) return null;
+  const parts = raw.replace(/^METAR\s+/, '').trim().split(/\s+/);
+  let obsTime = null, wind = null, qnh = null;
+  for (const tok of parts) {
+    if (/^\d{6}Z$/.test(tok)) {
+      const day = parseInt(tok.slice(0,2)), hh = parseInt(tok.slice(2,4)), mm = parseInt(tok.slice(4,6));
+      const now = new Date();
+      let d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), day, hh, mm));
+      if (d > now) d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth()-1, day, hh, mm));
+      obsTime = d;
+    } else if (/^(VRB|\d{3})\d{2,3}(G\d{2,3})?KT$/.test(tok)) {
+      const m = tok.match(/^(VRB|\d{3})(\d{2,3})(?:G(\d{2,3}))?KT$/);
+      wind = { dir: m[1]==='VRB'?'VRB':parseInt(m[1]), speed: parseInt(m[2]), gust: m[3]?parseInt(m[3]):null };
+    } else if (/^Q\d{4}$/.test(tok)) { qnh = parseInt(tok.slice(1)); }
+    else if (/^A\d{4}$/.test(tok)) { qnh = Math.round(parseInt(tok.slice(1))*0.33864*10)/10; }
+  }
+  return { obsTime, wind, qnh, raw };
+}
+function formatWind(w) {
+  if (!w) return '---/--KT';
+  const d = w.dir==='VRB'?'VRB':`${w.dir.toString().padStart(3,'0')}°`;
+  let s = `${d}/${w.speed}KT`;
+  if (w.gust) s += `G${w.gust}`;
+  return s;
+}
+async function fetchMetar(showLoading) {
+  const pill = document.getElementById('metar-pill');
+  const dataEl = document.getElementById('metar-data');
+  const ageEl  = document.getElementById('metar-age');
+  if (showLoading) { dataEl.textContent = 'loading…'; pill.className = 'metar-pill'; }
+  try {
+    const r = await fetch('https://aviationweather.gov/api/data/metar?ids=LKCV&format=raw', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const text = (await r.text()).trim();
+    if (!text || text.length < 10) throw new Error('empty');
+    const parsed = parseMetar(text);
+    if (!parsed) throw new Error('parse fail');
+    metarCache = { raw: text, fetchedAt: Date.now(), observedAt: parsed.obsTime ? parsed.obsTime.getTime() : Date.now(), parsed };
+    renderMetarWidget();
+  } catch(e) {
+    pill.className = 'metar-pill';
+    dataEl.textContent = 'N/A';
+    ageEl.textContent = 'error';
+  }
+}
+function renderMetarWidget() {
+  if (!metarCache.parsed) return;
+  const pill = document.getElementById('metar-pill');
+  const p = metarCache.parsed;
+  const qnhStr = p.qnh ? `Q${p.qnh}` : 'Q---';
+  document.getElementById('metar-data').textContent = `${qnhStr} · ${formatWind(p.wind)}`;
+  const ageMin = Math.floor((Date.now() - metarCache.observedAt) / 60000);
+  document.getElementById('metar-age').textContent = ageMin < 60 ? `${ageMin}m` : `${Math.floor(ageMin/60)}h${ageMin%60}m`;
+  const cls = ageMin < 35 ? 'fresh' : ageMin < 70 ? 'stale' : 'old';
+  pill.className = 'metar-pill ' + cls;  // pill id already correct
+  const fullEl = document.getElementById('metar-full');
+  if (fullEl) fullEl.textContent = metarCache.raw;
+}
+function toggleMetarDetail() {
+  document.getElementById('metar-detail').classList.toggle('show');
+}
+setInterval(() => { if (metarCache.parsed) renderMetarWidget(); }, 60000);
+fetchMetar(true);
+setInterval(() => fetchMetar(false), 10*60*1000);
+
+// ─── PRESETS ─────────────────────────────────────────────────────────────
+let PRESETS = JSON.parse(localStorage.getItem('rw_presets') || 'null');
+if (PRESETS === null) {
+  PRESETS = [];
+  savePresets();
+}
+function savePresets() { localStorage.setItem('rw_presets', JSON.stringify(PRESETS)); }
+
+// ─── LKKO PRESET PACK ────────────────────────────────────────────────────
+// Format from .txt: REGISTRATION,Type[,note]; ...
+const LKKO_PACK_RAW = 'OK-IMP,An-2,PARA;OK-AUO47,Skylane;OK-5036,Blaník;OK-8464,ASK-21;OK-KAP,Piper;OK-7104,Vivat;OK-BUA65,Samba;OK-3322,Astir;OK-9615,VSO-10;OK-OLI,Z-43';
+function loadLkkoPresetPack() {
+  const entries = LKKO_PACK_RAW.split(';').map(s => s.trim()).filter(Boolean);
+  let added = 0, updated = 0;
+  entries.forEach(entry => {
+    const parts = entry.split(',').map(s => s.trim());
+    const reg  = (parts[0] || '').toUpperCase();
+    const type = (parts[1] || '').toUpperCase();
+    if (!reg) return;
+    const existing = PRESETS.findIndex(p => p.reg === reg);
+    if (existing >= 0) { PRESETS[existing] = { reg, type }; updated++; }
+    else { PRESETS.push({ reg, type }); added++; }
+  });
+  savePresets();
+  renderPresetList();
+  const msg = [];
+  if (added)   msg.push(added + ' added');
+  if (updated) msg.push(updated + ' updated');
+  // brief toast inside modal
+  const btn = document.querySelector('[onclick="loadLkkoPresetPack()"]');
+  if (btn) {
+    const orig = btn.innerHTML;
+    btn.innerHTML = `✓ Pack loaded — ${msg.join(', ')}`;
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.color = 'var(--green)'; }, 2500);
+  }
+}
+
+function addPreset() {
+  const reg = document.getElementById('preset-reg-in').value.trim().toUpperCase();
+  const type = document.getElementById('preset-type-in').value.trim().toUpperCase();
+  if (!reg) { document.getElementById('preset-reg-in').focus(); return; }
+  if (PRESETS.find(p => p.reg === reg)) { alert('Preset already exists: ' + reg); return; }
+  PRESETS.push({ reg, type });
+  savePresets();
+  renderPresetList();
+  document.getElementById('preset-reg-in').value = '';
+  document.getElementById('preset-type-in').value = '';
+}
+
+function removePreset(reg) {
+  PRESETS = PRESETS.filter(p => p.reg !== reg);
+  savePresets();
+  renderPresetList();
+}
+
+function clearAllPresets() {
+  if (!PRESETS.length) return;
+  if (!confirm(`Remove all ${PRESETS.length} preset${PRESETS.length > 1 ? 's' : ''}?`)) return;
+  PRESETS = [];
+  savePresets();
+  renderPresetList();
+}
+
+function renderPresetList() {
+  const el = document.getElementById('preset-list');
+  if (!PRESETS.length) {
+    el.innerHTML = '<div style="color:var(--dim);font-family:var(--mono);font-size:12px;text-align:center;padding:16px;">No presets defined</div>';
+    return;
+  }
+  el.innerHTML = PRESETS.map(p => `
+    <div class="preset-item">
+      <span class="preset-item-reg">${p.reg}</span>
+      <span class="preset-item-type">${p.type || '—'}</span>
+      <button class="preset-del-btn" onclick="removePreset('${p.reg}')">✕</button>
+    </div>
+  `).join('');
+}
+
+// ─── SUGGESTIONS ─────────────────────────────────────────────────────────
+const regInput = document.getElementById('reg-input');
+const sugDiv = document.getElementById('suggestions');
+let sugHighlight = -1;
+let sugList = [];
+
+regInput.addEventListener('input', updateSuggestions);
+regInput.addEventListener('focus', () => { if (PRESETS.length && !regInput.value) {
+  sugList = PRESETS.slice(); sugDiv.style.display = 'block'; sugHighlight = -1; renderSug();
+}});
+regInput.addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown')  { e.preventDefault(); moveSug(1); }
+  if (e.key === 'ArrowUp')    { e.preventDefault(); moveSug(-1); }
+  if (e.key === 'Enter') {
+    if (sugHighlight >= 0 && sugList[sugHighlight]) {
+      selectSug(sugList[sugHighlight]); return;
+    }
+    const typeIn = document.getElementById('type-input');
+    if (typeIn.value || e.ctrlKey) addAircraft();
+    else typeIn.focus();
+  }
+  if (e.key === 'Escape') closeSug();
+});
+document.getElementById('type-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addAircraft();
+});
+
+function updateSuggestions() {
+  const val = regInput.value.toUpperCase().trim();
+  if (!val) { closeSug(); return; }
+  sugList = PRESETS.filter(p => p.reg.includes(val) || (p.type && p.type.toUpperCase().includes(val)));
+  if (!sugList.length) { closeSug(); return; }
+  sugDiv.style.display = 'block';
+  sugHighlight = -1;
+  renderSug();
+}
+function renderSug() {
+  sugDiv.innerHTML = sugList.map((p, i) => `
+    <div class="sug-item ${i === sugHighlight ? 'highlighted' : ''}" onmousedown="selectSug(${i})">
+      <span class="sug-reg">${p.reg}</span>
+      <span class="sug-type">${p.type || ''}</span>
+    </div>
+  `).join('');
+}
+function moveSug(dir) {
+  sugHighlight = Math.max(0, Math.min(sugList.length-1, sugHighlight + dir));
+  // Preview reg+type in input fields as you navigate
+  const p = sugList[sugHighlight];
+  if (p) {
+    regInput.value = p.reg;
+    document.getElementById('type-input').value = p.type || '';
+  }
+  renderSug();
+  // Scroll highlighted item into view inside the dropdown
+  requestAnimationFrame(() => {
+    const highlighted = sugDiv.querySelector('.sug-item.highlighted');
+    if (highlighted) highlighted.scrollIntoView({ block: 'nearest' });
+  });
+}
+function selectSug(idx) {
+  const p = typeof idx === 'number' ? sugList[idx] : idx;
+  if (!p) return;
+  regInput.value = p.reg;
+  document.getElementById('type-input').value = p.type || '';
+  closeSug();
+  addAircraft();
+}
+function closeSug() { sugDiv.style.display = 'none'; sugHighlight = -1; sugList = []; }
+document.addEventListener('click', e => { if (!e.target.closest('#ac-input-area')) closeSug(); });
+
+// ─── SHORTCUT CONFIG ─────────────────────────────────────────────────────
+// Locked — displayed in guide but not rebindable
+const SC_FIXED = [
+  { label: 'Reset Contact Timer',  display: 'Shift+Enter' },
+  { label: 'Undo Last Deletion',   display: 'Ctrl+Z'      },
+  { label: 'Exit List Edit Mode',  display: 'Enter'        },
+  { label: 'Navigate list',        display: '↑ / ↓ — in List Edit Mode' },
+  { label: 'Close / exit mode',    display: 'Esc'          },
+];
+// Editable — user can rebind freely
+const SC_DEFAULTS = {
+  tra:        { label: 'Open Airspace Activation', key: 'F1',   ctrl: false, shift: false, alt: false },
+  listEdit:   { label: 'List Edit Mode',           key: 'F3',   ctrl: false, shift: false, alt: false },
+  presets:    { label: 'Manage Presets',           key: 'F2',   ctrl: false, shift: false, alt: false },
+  cycleView:  { label: 'Cycle View',               key: 'v',    ctrl: false, shift: false, alt: false },
+  focusInput: { label: 'Focus Registration Input', key: ' ',    ctrl: false, shift: false, alt: false },
+  scrollTop:  { label: 'Scroll to Top',            key: 'Home', ctrl: false, shift: false, alt: false },
+};
+let SC = JSON.parse(localStorage.getItem('rw_shortcuts') || 'null');
+// Reset if stale (old format didn't include 'tra')
+if (!SC || !('tra' in SC)) { SC = JSON.parse(JSON.stringify(SC_DEFAULTS)); }
+function saveSC() { localStorage.setItem('rw_shortcuts', JSON.stringify(SC)); }
+function resetShortcuts() { SC = JSON.parse(JSON.stringify(SC_DEFAULTS)); saveSC(); renderShortcutSettings(); }
+function scDisplay(s) {
+  let d = '';
+  if (s.ctrl)  d += 'Ctrl+';
+  if (s.shift) d += 'Shift+';
+  if (s.alt)   d += 'Alt+';
+  const k = s.key === ' ' ? 'Space' : s.key;
+  return d + k;
+}
+function matchSC(e, name) {
+  const s = SC[name];
+  if (!s) return false;
+  return e.key === s.key && e.ctrlKey === s.ctrl && e.shiftKey === s.shift && e.altKey === s.alt;
+}
+
+let scRecording = null; // name of shortcut being recorded
+function startRecording(name) {
+  scRecording = name;
+  renderShortcutSettings();
+}
+function handleScRecord(e) {
+  if (!scRecording) return false;
+  e.preventDefault(); e.stopPropagation();
+  if (e.key === 'Escape') { scRecording = null; renderShortcutSettings(); return true; }
+  if (['Control','Shift','Alt','Meta'].includes(e.key)) return true; // wait for main key
+  SC[scRecording] = { ...SC[scRecording], key: e.key, ctrl: e.ctrlKey, shift: e.shiftKey, alt: e.altKey };
+  saveSC();
+  scRecording = null;
+  renderShortcutSettings();
+  return true;
+}
+function scEditClick(btn) {
+  const name = btn.closest('[data-scname]').dataset.scname;
+  if (scRecording === name) { scRecording = null; renderShortcutSettings(); }
+  else { startRecording(name); }
+}
+function renderShortcutSettings() {
+  const el = document.getElementById('shortcut-settings');
+  if (!el) return;
+  let html = '';
+  // Editable shortcuts first
+  html += '<div style="font-size:9px;color:var(--dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;padding:2px 0 4px 2px;">Editable</div>';
+  Object.entries(SC_DEFAULTS).forEach(([name]) => {
+    const s = SC[name];
+    const isRec = scRecording === name;
+    html += `<div class="sc-row" data-scname="${name}">
+      <span class="sc-label">${s.label}</span>
+      <span class="sc-key ${isRec ? 'recording' : ''}">${isRec ? '▶ press key…' : scDisplay(s)}</span>
+      <button class="sc-edit-btn" onclick="scEditClick(this)">${isRec ? '✕' : 'edit'}</button>
+    </div>`;
+  });
+  // Locked shortcuts below
+  html += '<div style="height:6px;border-top:1px solid var(--border);margin:6px 0 4px;"></div>';
+  html += '<div style="font-size:9px;color:var(--dim);font-family:var(--mono);text-transform:uppercase;letter-spacing:.8px;padding:2px 0 4px 2px;">Locked</div>';
+  SC_FIXED.forEach(f => {
+    html += `<div class="sc-row">
+      <span class="sc-label">${f.label}</span>
+      <span class="sc-key">${f.display}</span>
+      <span class="sc-fixed">🔒</span>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
+// ─── UNDO DELETE ──────────────────────────────────────────────────────────
+let lastDeleted = null;
+let undoTimeout = null;
+function showUndoToast() {
+  const btn = document.getElementById('undo-btn');
+  if (!btn) return;
+  btn.style.display = 'inline-block';
+  clearTimeout(undoTimeout);
+  undoTimeout = setTimeout(() => { btn.style.display = 'none'; lastDeleted = null; }, 8000);
+}
+function undoDelete() {
+  if (!lastDeleted) return;
+  aircraft.push(lastDeleted);
+  lastDeleted = null;
+  clearTimeout(undoTimeout);
+  const btn = document.getElementById('undo-btn');
+  if (btn) btn.style.display = 'none';
+  save(); render();
+}
+
+// ─── AIRCRAFT STATE ───────────────────────────────────────────────────────
+let aircraft = JSON.parse(localStorage.getItem('radioWatchAircraft') || '[]');
+let settings = JSON.parse(localStorage.getItem('radioWatchSettings') || '{"limitMinutes":30,"warningMinutes":5}');
+let alertedIds = new Set();
+let warningIds = new Set();
+document.getElementById('limitMinutes').value = settings.limitMinutes;
+document.getElementById('warningMinutes').value = settings.warningMinutes;
+
+function saveSettings() {
+  settings.limitMinutes   = parseInt(document.getElementById('limitMinutes').value)   || 30;
+  settings.warningMinutes = parseInt(document.getElementById('warningMinutes').value) || 5;
+  localStorage.setItem('radioWatchSettings', JSON.stringify(settings));
+  render();
+}
+function save() { localStorage.setItem('radioWatchAircraft', JSON.stringify(aircraft)); }
+
+function addAircraft() {
+  const reg  = regInput.value.trim().toUpperCase();
+  const call = document.getElementById('type-input').value.trim();
+  if (!reg) { regInput.focus(); return; }
+  // Check preset click behaviour — if already exists, reset contact
+  const existing = aircraft.find(a => a.registration === reg);
+  if (existing) {
+    existing.lastContact = Date.now();
+    alertedIds.delete(existing.id);
+    warningIds.delete(existing.id);
+  } else {
+    const now = Date.now();
+    aircraft.push({ id: now + Math.random(), registration: reg, callsign: call, addedAt: now, lastContact: now });
+  }
+  regInput.value = '';
+  document.getElementById('type-input').value = '';
+  regInput.focus();
+  closeSug();
+  save();
+  render();
+}
+
+const pendingFlash = new Set();
+
+function resetContact(id) {
+  const a = aircraft.find(x => x.id === id);
+  if (a) {
+    a.lastContact = Date.now();
+    alertedIds.delete(id);
+    warningIds.delete(id);
+    pendingFlash.add(id);
+    save();
+    render();
+  }
+}
+
+// ─── TIMER EDIT ───────────────────────────────────────────────────────────
+let timerEditId = null;
+
+function startTimerEdit(id, el) {
+  timerEditId = id;
+  const a = aircraft.find(x => x.id === id);
+  if (!a) return;
+  const limitMs = settings.limitMinutes * 60000;
+  const remaining = limitMs - (Date.now() - a.lastContact);
+  const absMsn = Math.abs(remaining);
+  const m = Math.floor(absMsn / 60000);
+  const s = Math.floor((absMsn % 60000) / 1000);
+  const val = (remaining < 0 ? '+' : '') + m.toString().padStart(2,'0') + ':' + s.toString().padStart(2,'0');
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.value = val;
+  input.className = 'timer-edit-input';
+  input.maxLength = 6;
+  input.title = 'MM:SS — Enter to confirm, Esc to cancel';
+  el.replaceWith(input);
+  input.select();
+
+  let committed = false;
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); committed = true; commitTimerEdit(id, input.value); }
+    if (e.key === 'Escape') { e.preventDefault(); timerEditId = null; render(); }
+  });
+  input.addEventListener('blur', () => { if (!committed) { committed = true; commitTimerEdit(id, input.value); } });
+}
+
+function commitTimerEdit(id, val) {
+  timerEditId = null;
+  const a = aircraft.find(x => x.id === id);
+  if (!a) { render(); return; }
+  const clean = val.trim().replace(/^[+\-]/, '');
+  const match = clean.match(/^(\d{1,3}):(\d{2})$/);
+  if (match) {
+    const newRemainingMs = (parseInt(match[1]) * 60 + parseInt(match[2])) * 1000;
+    const limitMs = settings.limitMinutes * 60000;
+    a.lastContact = Date.now() - (limitMs - newRemainingMs);
+    alertedIds.delete(id);
+    warningIds.delete(id);
+    pendingFlash.add(id);
+    save();
+  }
+  render();
+}
+function updateNote(id, value) {
+  const a = aircraft.find(x => x.id === id);
+  if (a) { a.note = value.trim(); save(); }
+}
+function removeAircraft(id) {
+  lastDeleted = JSON.parse(JSON.stringify(aircraft.find(x => x.id === id) || null));
+  const card = document.querySelector(`.ac-card[data-id="${id}"]`);
+  function doRemove() {
+    aircraft = aircraft.filter(x => x.id !== id);
+    alertedIds.delete(id);
+    warningIds.delete(id);
+    save(); render();
+    if (lastDeleted) showUndoToast();
+  }
+  if (card) {
+    card.classList.add('flash-delete');
+    setTimeout(doRemove, 460);
+  } else {
+    doRemove();
+  }
+}
+
+function formatTime(ts) {
+  return new Date(ts).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+function formatCountdown(ms) {
+  const neg = ms < 0; const abs = Math.abs(ms);
+  const m = Math.floor(abs/60000); const s = Math.floor((abs%60000)/1000);
+  return (neg ? '+' : '') + m.toString().padStart(2,'0') + ':' + s.toString().padStart(2,'0');
+}
+function playAlertSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [[880, 0], [660, 0.3]].forEach(([freq, delay]) => {
+      const osc = ctx.createOscillator(), gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = freq; osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.5);
+      osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.5);
+    });
+  } catch(e) {}
+}
+function showNotification(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted')
+    new Notification(title, { body, requireInteraction: true });
+}
+function requestNotifications() {
+  if (!('Notification' in window)) { alert('Notifications not supported'); return; }
+  Notification.requestPermission().then(updateNotifStatus);
+}
+function updateNotifStatus() {
+  const on = 'Notification' in window && Notification.permission === 'granted';
+  ['notifStatus','notifStatusModal'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = on ? 'NOTIF: ON' : 'NOTIF: OFF';
+    el.className = 'notif-status ' + (on ? 'on' : 'off');
+  });
+}
+updateNotifStatus();
+
+// ─── KEYBOARD CONTACT SELECT (F3) ────────────────────────────────────────
+let contactSelectMode = false;
+let contactSelectIdx = 0;
+function enterContactSelectMode() {
+  if (!aircraft.length) return;
+  contactSelectMode = true;
+  contactSelectIdx = 0;
+  highlightContactCard();
+  const listEl = document.getElementById('ac-list-scroll');
+  listEl.focus && listEl.focus();
+}
+function highlightContactCard() {
+  document.querySelectorAll('.ac-card').forEach((c, i) => {
+    c.classList.toggle('selected', i === contactSelectIdx);
+    if (i === contactSelectIdx) c.scrollIntoView({ block: 'nearest' });
+  });
+}
+function exitContactSelectMode() {
+  contactSelectMode = false;
+  document.querySelectorAll('.ac-card').forEach(c => c.classList.remove('selected'));
+}
+
+// ─── RENDER AIRCRAFT LIST ────────────────────────────────────────────────
+function render() {
+  const list = document.getElementById('list');
+  const now = Date.now();
+  const limitMs = settings.limitMinutes * 60000;
+  const warnMs  = settings.warningMinutes * 60000;
+
+  // Don't re-render if focus is in a note or timer-edit input
+  const active = document.activeElement;
+  if (timerEditId !== null || (active && active.classList && active.classList.contains('ac-note-input'))) {
+    // Only update countdowns
+    document.querySelectorAll('.ac-card').forEach((card, idx) => {
+      const cdEl = card.querySelector('.ac-countdown');
+      if (!cdEl) return;
+      const sorted = getSortedAircraft(now, limitMs);
+      const a = sorted[idx]; if (!a) return;
+      const remaining = limitMs - (now - a.lastContact);
+      cdEl.textContent = formatCountdown(remaining);
+      cdEl.className = 'ac-countdown' + (remaining <= 0 ? ' alert' : remaining <= warnMs ? ' warning' : '');
+      card.className = 'ac-card' + (remaining <= 0 ? ' alert' : remaining <= warnMs ? ' warning' : '');
+      if (contactSelectMode && idx === contactSelectIdx) card.classList.add('selected');
+    });
+    return;
+  }
+
+  const wasSelectMode = contactSelectMode;
+  const wasIdx = contactSelectIdx;
+
+  document.getElementById('ac-count').textContent = aircraft.length + ' AC';
+
+  if (!aircraft.length) {
+    list.innerHTML = '<div class="ac-empty">No aircraft on frequency<br>Use the bar below to add</div>';
+    return;
+  }
+
+  const sorted = getSortedAircraft(now, limitMs);
+  list.innerHTML = sorted.map((a, idx) => {
+    const elapsed = now - a.lastContact;
+    const remaining = limitMs - elapsed;
+    let cls = ''; let cdCls = '';
+    if (remaining <= 0) {
+      cls = 'alert'; cdCls = 'alert';
+      if (!alertedIds.has(a.id)) { alertedIds.add(a.id); playAlertSound(); showNotification(`⚠ ALARM: ${a.registration}`, `No contact ${settings.limitMinutes}+ min`); }
+    } else if (remaining <= warnMs) {
+      cls = 'warning'; cdCls = 'warning';
+      if (!warningIds.has(a.id)) { warningIds.add(a.id); showNotification(`⚠ Approaching: ${a.registration}`, `${Math.ceil(remaining/60000)} min to alarm`); }
+    }
+    const selCls = (wasSelectMode && idx === wasIdx) ? ' selected' : '';
+    const isPara = (a.note || '').toUpperCase().includes('PARA');
+    const paraIcon = isPara ? '<span style="color:var(--accent2);margin-right:3px;font-size:12px;">🪂</span>' : '';
+    return `
+      <div class="ac-card ${cls}${selCls}" data-idx="${idx}" data-id="${a.id}">
+        <div class="ac-line">
+          <span class="ac-idx">${(idx+1).toString().padStart(2,'0')}</span>
+          <span class="ac-reg">${paraIcon}${a.registration}</span>
+          <span class="ac-type-sm">${a.callsign || '·'}</span>
+          <span class="ac-times">+${formatTime(a.addedAt).slice(0,5)} ✔${formatTime(a.lastContact).slice(0,5)}</span>
+          <input type="text" class="ac-note-input ${a.note ? 'has-value' : ''}"
+            value="${(a.note||'').replace(/"/g,'&quot;')}"
+            placeholder="—"
+            maxlength="40"
+            oninput="updateNote(${a.id}, this.value)"
+            onblur="this.classList.toggle('has-value',!!this.value)">
+          <span class="ac-countdown ${cdCls}" onclick="startTimerEdit(${a.id}, this)" title="Click to edit time">${formatCountdown(remaining)}</span>
+          <button class="ac-contact-btn" onclick="resetContact(${a.id})" title="Log contact">✔</button>
+          <button class="ac-del-btn" onclick="removeAircraft(${a.id})" title="Remove">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Apply any pending flash highlights
+  if (pendingFlash.size) {
+    requestAnimationFrame(() => {
+      const cards = document.querySelectorAll('.ac-card');
+      sorted.forEach((a, idx) => {
+        if (pendingFlash.has(a.id) && cards[idx]) {
+          const card = cards[idx];
+          card.classList.remove('flash');
+          void card.offsetWidth;
+          card.classList.add('flash');
+          setTimeout(() => card.classList.remove('flash'), 700);
+        }
+      });
+      pendingFlash.clear();
+    });
+  }
+}
+
+function getSortedAircraft(now, limitMs) {
+  return [...aircraft].sort((a, b) => (limitMs - (now - a.lastContact)) - (limitMs - (now - b.lastContact)));
+}
+
+setInterval(() => { updateClock(); render(); renderMetarWidget(); }, 1000);
+render();
+
+// ─── TRA STATE ────────────────────────────────────────────────────────────
+const NM = 1852, FT_TO_M = 0.3048;
+const P1=[-1335,5335],P2=[-2329,4410],P3=[1542,301],P4=[-5140,-1915],P5=[1865,-5173];
+const Q1=[-13988,20416],Q2=[-1304,20446],Q3=[-13341,5347],Q4=[-15641,-5418],Q5=[-6063,-11728],Q6=[-8420,-13812],Q7=[-8668,-14846],Q8=[-17083,-9372],Q9=[1846,-4757];
+const OKL=[-64881,10440],R2=NM*28,R3NM=NM*3;
+function arc(cx,cy,r,a1,a2,cw,steps){
+  let aa1=a1,aa2=a2;
+  if(cw){while(aa2>aa1)aa2-=360;}else{while(aa2<aa1)aa2+=360;}
+  const pts=[];
+  for(let i=0;i<=steps;i++){const t=i/steps;const a=(aa1+(aa2-aa1)*t)*Math.PI/180;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}
+  return pts;
+}
+function ang(p,cx,cy){return Math.atan2(p[1]-cy,p[0]-cx)*180/Math.PI;}
+function polyArea(pts){let s=0,n=pts.length;for(let i=0;i<n;i++){const[x1,y1]=pts[i],[x2,y2]=pts[(i+1)%n];s+=x1*y2-x2*y1;}return s/2;}
+function ensureCCW(pts){return polyArea(pts)<0?pts.slice().reverse():pts;}
+const POLY_1A=ensureCCW([P1,P2,P3,P4,...arc(0,0,R3NM,ang(P4,0,0),ang(P1,0,0),true,20)]);
+const POLY_1B=ensureCCW([P4,P3,P5,...arc(0,0,R3NM,ang(P5,0,0),ang(P4,0,0),true,20)]);
+const POLY_1CD=ensureCCW([P1,P2,P3,P5,...arc(0,0,R3NM,ang(P5,0,0),ang(P1,0,0),false,24)]);
+const POLY_2A=ensureCCW([Q1,Q2,P1,Q3,...arc(OKL[0],OKL[1],R2,ang(Q3,OKL[0],OKL[1]),ang(Q1,OKL[0],OKL[1]),false,16)]);
+const POLY_2B=ensureCCW([Q3,P1,P2,P3,Q4,...arc(OKL[0],OKL[1],R2,ang(Q4,OKL[0],OKL[1]),ang(Q3,OKL[0],OKL[1]),false,16)]);
+const POLY_2C=ensureCCW([Q4,P3,Q9,Q5]);
+const POLY_2D=ensureCCW([Q4,Q5,Q6,Q7,Q8,...arc(OKL[0],OKL[1],R2,ang(Q8,OKL[0],OKL[1]),ang(Q4,OKL[0],OKL[1]),false,16)]);
+const TRA_GEO={'1A':{poly:POLY_1A,floorFt:2000,ceilFt:9500},'1B':{poly:POLY_1B,floorFt:2500,ceilFt:9500},'1C':{poly:POLY_1CD,floorFt:0,ceilFt:5000},'1D':{poly:POLY_1CD,floorFt:5000,ceilFt:9500},'2A':{poly:POLY_2A,floorFt:2000,ceilFt:5000},'2B':{poly:POLY_2B,floorFt:2000,ceilFt:8500},'2C':{poly:POLY_2C,floorFt:2500,ceilFt:9500},'2D':{poly:POLY_2D,floorFt:3000,ceilFt:9500}};
+const TRA_AREAS=[
+  {id:'1A',name:'TRACVKO1A',maxFL:95,floor:'2000 ft AMSL',ceiling:'FL 095'},
+  {id:'1B',name:'TRACVKO1B',maxFL:95,floor:'2500 ft AMSL',ceiling:'FL 095'},
+  {id:'1C',name:'TRACVKO1C',maxFL:50,floor:'GND',ceiling:'5000 ft AMSL'},
+  {id:'1D',name:'TRACVKO1D',maxFL:95,floor:'5000 ft AMSL',ceiling:'FL 095'},
+  {id:'2A',name:'TRACVKO2A',maxFL:50,floor:'2000 ft AMSL',ceiling:'5000 ft AMSL'},
+  {id:'2B',name:'TRACVKO2B',maxFL:85,floor:'2000 ft AMSL',ceiling:'FL 085'},
+  {id:'2C',name:'TRACVKO2C',maxFL:95,floor:'2500 ft AMSL',ceiling:'FL 095'},
+  {id:'2D',name:'TRACVKO2D',maxFL:95,floor:'3000 ft AMSL',ceiling:'FL 095'}
+];
+let traState = JSON.parse(localStorage.getItem('radioWatchTraState') || '{}');
+function saveTra(){localStorage.setItem('radioWatchTraState',JSON.stringify(traState));}
+function parseFL(v){const c=v.toString().toUpperCase().replace(/[^0-9]/g,'');return c?parseInt(c):null;}
+function activateTra(id){
+  const inp=document.getElementById('tra-fl-'+id);
+  const area=TRA_AREAS.find(a=>a.id===id);
+  const fl=parseFL(inp.value);
+  if(fl===null){inp.classList.add('invalid');inp.focus();return;}
+  if(fl>area.maxFL){alert(`${area.name}: max FL is ${area.maxFL}`);inp.classList.add('invalid');return;}
+  if(fl<5){alert('FL too low, check input');inp.classList.add('invalid');return;}
+  inp.classList.remove('invalid');
+  traState[id]={fl,activatedAt:Date.now()};
+  saveTra();renderTra();if(scene)renderZones();
+}
+function deactivateTra(id){delete traState[id];saveTra();renderTra();if(scene)renderZones();}
+function togglePhraseology(){document.getElementById('phraseology').classList.toggle('show');}
+function renderTra(){
+  const group1 = TRA_AREAS.filter(a => a.id.startsWith('1'));
+  const group2 = TRA_AREAS.filter(a => a.id.startsWith('2'));
+  function renderGroup(areas) {
+    return areas.map(a=>{
+      const state=traState[a.id],isActive=!!state;
+      return `<div class="tra-card ${isActive?'active':''}">
+        <div class="tra-head"><span class="tra-id">${a.id}</span><span class="tra-maxfl">max FL${a.maxFL}</span></div>
+        <div class="tra-status">${isActive?`✓ Active to FL${state.fl}`:`${a.floor} → ${a.ceiling}`}</div>
+        <div class="tra-ctrl">${isActive
+          ?`<button class="tra-deact-btn" onclick="deactivateTra('${a.id}')">Deact</button>`
+          :`<input type="text" class="tra-fl-in" id="tra-fl-${a.id}" placeholder="FL${a.maxFL}" maxlength="3" onkeydown="if(event.key==='Enter')activateTra('${a.id}')">
+            <button class="tra-act-btn" onclick="activateTra('${a.id}')">Act</button>`
+        }</div>
+      </div>`;
+    }).join('');
+  }
+  function groupHeader(num, areas) {
+    const names = areas.map(a=>a.id).join(' · ');
+    return `<div class="tra-group-header">
+      <span class="tra-group-label">GROUP ${num} — TRACVKO${areas.map(a=>a.id).join(' · ')}</span>
+      <div class="tra-group-actions">
+        <input type="text" class="tra-all-fl-in" id="tra-all-fl-${num}" placeholder="FL" maxlength="3"
+          onkeydown="if(event.key==='Enter')activateAllGroup('${num}')">
+        <button class="tra-all-act-btn" onclick="activateAllGroup('${num}')">▲ All</button>
+        <button class="tra-all-deact-btn" onclick="deactivateAllGroup('${num}')">▼ All</button>
+      </div>
+    </div>`;
+  }
+  document.getElementById('traGrid').innerHTML =
+    groupHeader('1', group1) +
+    `<div class="tra-group-grid">${renderGroup(group1)}</div>` +
+    `<div class="tra-group-sep"></div>` +
+    groupHeader('2', group2) +
+    `<div class="tra-group-grid">${renderGroup(group2)}</div>`;
+}
+
+function activateAllGroup(group) {
+  const inp = document.getElementById('tra-all-fl-' + group);
+  const fl = parseFL(inp.value);
+  if (fl === null) { inp.classList.add('invalid'); inp.focus(); return; }
+  if (fl < 5) { inp.classList.add('invalid'); inp.focus(); alert('FL too low'); return; }
+  inp.classList.remove('invalid');
+  const areas = TRA_AREAS.filter(a => a.id.startsWith(group));
+  const skipped = [];
+  areas.forEach(a => {
+    if (fl > a.maxFL) { skipped.push(a.id + ' (max FL' + a.maxFL + ')'); return; }
+    traState[a.id] = { fl, activatedAt: Date.now() };
+  });
+  if (skipped.length) alert('Skipped (FL too high): ' + skipped.join(', '));
+  saveTra(); renderTra(); if(scene) renderZones();
+}
+
+function deactivateAllGroup(group) {
+  TRA_AREAS.filter(a => a.id.startsWith(group)).forEach(a => delete traState[a.id]);
+  saveTra(); renderTra(); if(scene) renderZones();
+}
+renderTra();
+
+// ─── MODALS ───────────────────────────────────────────────────────────────
+function openTra()     { document.getElementById('tra-overlay').classList.add('show'); }
+function closeTra()    { document.getElementById('tra-overlay').classList.remove('show'); }
+function openSettings(){ document.getElementById('settings-overlay').classList.add('show'); renderShortcutSettings(); }
+function closeSettings(){ document.getElementById('settings-overlay').classList.remove('show'); }
+function openPresets() { renderPresetList(); document.getElementById('presets-overlay').classList.add('show'); }
+function closePresets(){ document.getElementById('presets-overlay').classList.remove('show'); }
+
+// ─── VIEW SWITCHING ───────────────────────────────────────────────────────
+let currentTopView = 'both'; // 'both' | 'viz' | 'list'
+function cycleView() {
+  const views = ['both', 'viz', 'list'];
+  const icons = ['👁','🗺','📋'];
+  const idx = (views.indexOf(currentTopView) + 1) % views.length;
+  currentTopView = views[idx];
+  document.getElementById('view-toggle-btn').querySelector('.btn-ico').textContent = icons[idx];
+  const upper = document.getElementById('upper-zone');
+  if (currentTopView === 'both') {
+    upper.style.gridTemplateColumns = '1fr 2fr';
+    document.getElementById('viz-pane').style.display = 'flex';
+    document.getElementById('ac-pane').style.display = 'flex';
+    setTimeout(onResize, 50);
+  } else if (currentTopView === 'viz') {
+    upper.style.gridTemplateColumns = '1fr';
+    document.getElementById('viz-pane').style.display = 'flex';
+    document.getElementById('ac-pane').style.display = 'none';
+    setTimeout(onResize, 50);
+  } else {
+    upper.style.gridTemplateColumns = '1fr';
+    document.getElementById('viz-pane').style.display = 'none';
+    document.getElementById('ac-pane').style.display = 'flex';
+  }
+}
+
+// ─── THEME ────────────────────────────────────────────────────────────────
+let isDark = true;
+function toggleTheme() {
+  isDark = !isDark;
+  document.getElementById('theme-btn').textContent = isDark ? 'Dark' : 'Light';
+  document.getElementById('theme-btn').classList.toggle('active', isDark);
+  if (!isDark) {
+    document.documentElement.style.setProperty('--bg',       '#f0f2f5');
+    document.documentElement.style.setProperty('--bg2',      '#e4e7ed');
+    document.documentElement.style.setProperty('--bg3',      '#d8dce5');
+    document.documentElement.style.setProperty('--border',   '#c4c8d0');
+    document.documentElement.style.setProperty('--border2',  '#b0b5c0');
+    document.documentElement.style.setProperty('--text',     '#1a1d24');
+    document.documentElement.style.setProperty('--bright',   '#0a0c10');
+    document.documentElement.style.setProperty('--mid',      '#3a4050');
+    document.documentElement.style.setProperty('--dim',      '#6a7080');
+  } else {
+    document.documentElement.style.setProperty('--bg',       '#0b0c0f');
+    document.documentElement.style.setProperty('--bg2',      '#111318');
+    document.documentElement.style.setProperty('--bg3',      '#181b22');
+    document.documentElement.style.setProperty('--border',   '#252830');
+    document.documentElement.style.setProperty('--border2',  '#2e3240');
+    document.documentElement.style.setProperty('--text',     '#cdd2df');
+    document.documentElement.style.setProperty('--bright',   '#edf0f7');
+    document.documentElement.style.setProperty('--mid',      '#7a859e');
+    document.documentElement.style.setProperty('--dim',      '#4a5168');
+  }
+  applyVizTheme();
+}
+
+// ── Sync 3D viewer to current dark/light theme ────────────────────────────
+function applyVizTheme() {
+  if (!scene) return;
+  const bgCol = isDark ? 0x060709 : 0xdce4f0;
+  scene.background = new THREE.Color(bgCol);
+  scene.fog         = new THREE.Fog(bgCol, 40000, 120000);
+  if (vizAmbient)  vizAmbient.intensity  = isDark ? 0.6 : 1.15;
+  if (vizDirLight) vizDirLight.intensity = isDark ? 0.6 : 0.22;
+  if (vizGrid) {
+    // GridHelper has two materials: [0] = center lines, [1] = grid lines
+    const mats = Array.isArray(vizGrid.material) ? vizGrid.material : [vizGrid.material];
+    mats[0] && mats[0].color.set(isDark ? 0x1a1d22 : 0xb0bace);
+    mats[1] && mats[1].color.set(isDark ? 0x111318 : 0xc8d2e2);
+  }
+  rebuildCompassLabels();
+  renderZones();
+}
+
+// ─── KEYBOARD SHORTCUTS ───────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  // Intercept shortcut recording first
+  if (scRecording) { handleScRecord(e); return; }
+
+  const tag = document.activeElement?.tagName;
+  const active = document.activeElement;
+  const inInput = ['INPUT','TEXTAREA'].includes(tag);
+
+  // Hardcoded fixed shortcuts
+  if (e.key === 'Escape') {
+    closeTra(); closeSettings(); closePresets();
+    if (contactSelectMode) exitContactSelectMode();
+    return;
+  }
+  // Shift+Enter — reset contact (locked)
+  if (e.key === 'Enter' && e.shiftKey) {
+    e.preventDefault();
+    if (contactSelectMode) {
+      const sorted = getSortedAircraft(Date.now(), settings.limitMinutes*60000);
+      const a = sorted[contactSelectIdx];
+      if (a) { resetContact(a.id); highlightContactCard(); }
+    } else if (active && active.classList && active.classList.contains('ac-note-input')) {
+      const card = active.closest('.ac-card');
+      if (card) {
+        const idx2 = parseInt(card.dataset.idx);
+        const sorted = getSortedAircraft(Date.now(), settings.limitMinutes*60000);
+        const a = sorted[idx2];
+        if (a) { const focusEl = active; resetContact(a.id); setTimeout(()=>focusEl.focus(), 10); }
+      }
+    }
+    return;
+  }
+  // Ctrl+Z — undo delete (locked)
+  if (e.ctrlKey && e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoDelete(); return; }
+
+  // User-configurable shortcuts
+  if (matchSC(e, 'tra') && !e.shiftKey && !e.altKey)      { e.preventDefault(); openTra(); return; }
+  if (matchSC(e, 'presets') && !e.shiftKey && !e.altKey)  { e.preventDefault(); openPresets(); return; }
+  if (matchSC(e, 'listEdit') && !e.shiftKey && !e.altKey) {
+    e.preventDefault();
+    if (!contactSelectMode) { enterContactSelectMode(); }
+    else { exitContactSelectMode(); regInput.focus(); }
+    return;
+  }
+  if (matchSC(e, 'scrollTop') && !inInput)  { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (matchSC(e, 'cycleView') && !inInput)   { cycleView(); return; }
+  if (matchSC(e, 'focusInput') && !inInput)  { e.preventDefault(); regInput.focus(); return; }
+
+  if (contactSelectMode) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const sorted = getSortedAircraft(Date.now(), settings.limitMinutes*60000);
+      contactSelectIdx = Math.min(sorted.length-1, contactSelectIdx+1);
+      highlightContactCard(); return;
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      contactSelectIdx = Math.max(0, contactSelectIdx-1);
+      highlightContactCard(); return;
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      exitContactSelectMode();
+      regInput.focus();
+      return;
+    }
+  }
+});
+
+// ─── 3D VIZ ───────────────────────────────────────────────────────────────
+let scene, camera, renderer, zoneGroup;
+let currentView = 'iso';
+let isDragging = false, dragMode = null;
+let camAngleH = Math.PI/4, camAngleV = 0.6, camDist = 38000;
+let camTarget = { x: 0, y: 0, z: 1500 };
+const V_SCALE = 2;
+let vizAmbient, vizDirLight, vizGrid;
+let compassSprites = [];
+
+function polygonToShape(poly){
+  const fixed=ensureCCW(poly.map(p=>[p[0],p[1]]));
+  const shape=new THREE.Shape();
+  shape.moveTo(fixed[0][0],fixed[0][1]);
+  for(let i=1;i<fixed.length;i++) shape.lineTo(fixed[i][0],fixed[i][1]);
+  shape.closePath();
+  return shape;
+}
+function polyCentroid(poly){let sx=0,sy=0;for(const p of poly){sx+=p[0];sy+=p[1];}return[sx/poly.length,sy/poly.length];}
+
+function initViz(){
+  const container=document.getElementById('viz3d');
+  const w=container.clientWidth,h=container.clientHeight;
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x060709);
+  scene.fog=new THREE.Fog(0x060709,40000,120000);
+  camera=new THREE.PerspectiveCamera(45,w/h,100,200000);
+  updateCameraPosition();
+  renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(w,h);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  container.appendChild(renderer.domElement);
+  vizAmbient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(vizAmbient);
+  vizDirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+  vizDirLight.position.set(10000, 30000, 5000);
+  scene.add(vizDirLight);
+  vizGrid = new THREE.GridHelper(60000, 30, 0x1a1d22, 0x111318);
+  scene.add(vizGrid);
+  rebuildCompassLabels();
+  zoneGroup=new THREE.Group();
+  scene.add(zoneGroup);
+  addAirportMarker();
+  setupMouseControls(container);
+  window.addEventListener('resize',onResize);
+  renderZones();
+  animate();
+}
+
+function addCompassLabel(text, x, y, z, colorDark, colorLight) {
+  const cv=document.createElement('canvas'); cv.width=128; cv.height=128;
+  const c=cv.getContext('2d');
+  const bgFill = isDark ? 'rgba(6,7,9,0.72)' : 'rgba(195,205,225,0.88)';
+  const txtCol = isDark ? colorDark : colorLight;
+  c.fillStyle=bgFill; c.beginPath(); c.arc(64,64,50,0,Math.PI*2); c.fill();
+  c.strokeStyle=txtCol; c.lineWidth=2; c.stroke();
+  c.fillStyle=txtCol; c.font='bold 56px monospace'; c.textAlign='center'; c.textBaseline='middle'; c.fillText(text,64,64);
+  const tex=new THREE.CanvasTexture(cv);
+  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  spr.position.set(x,y,z); spr.scale.set(2500,2500,1); spr.renderOrder=1000;
+  scene.add(spr);
+  return spr;
+}
+function rebuildCompassLabels() {
+  compassSprites.forEach(s => scene.remove(s));
+  compassSprites = [];
+  compassSprites.push(addCompassLabel('N',      0, 1500, -22000, '#ff3d3d', '#cc1a1a'));
+  compassSprites.push(addCompassLabel('S',      0, 1500,  22000, '#4a5168', '#2a3258'));
+  compassSprites.push(addCompassLabel('E',  22000, 1500,      0, '#4a5168', '#2a3258'));
+  compassSprites.push(addCompassLabel('W', -22000, 1500,      0, '#4a5168', '#2a3258'));
+}
+function addAirportMarker(){
+  // Runway: short thick line at bearing 030 (30° from north) at base elevation
+  // In Three.js: north=-Z, east=+X → bearing 030 direction = (sin30°, 0, -cos30°)
+  // Box rotated so its depth (Z) aligns with bearing 030: rotationY = 150° = 5π/6
+  const runwayLen = 1100, runwayW = 220, runwayH = 80;
+  const rwMat = new THREE.MeshStandardMaterial({
+    color: 0x1a6fff, emissive: 0x0055dd, emissiveIntensity: 0.7,
+    roughness: 0.3, metalness: 0.2
+  });
+  const rwGeo = new THREE.BoxGeometry(runwayW, runwayH, runwayLen);
+  const rw = new THREE.Mesh(rwGeo, rwMat);
+  rw.position.set(0, runwayH / 2 + 5, 0);
+  rw.rotation.y = 5 * Math.PI / 6; // aligns box depth with bearing 030
+  scene.add(rw);
+  // Subtle glow ring at base for airport centre
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(500, 640, 32),
+    new THREE.MeshBasicMaterial({color:0x0077ff, side:THREE.DoubleSide, transparent:true, opacity:0.35})
+  );
+  ring.rotation.x = -Math.PI / 2;
+  ring.position.set(0, 8, 0);
+  scene.add(ring);
+  // LKKO label
+  const cv = document.createElement('canvas'); cv.width = 256; cv.height = 64;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#00c3ff'; c.font = 'bold 32px monospace';
+  c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('LKKO', 128, 32);
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({map: new THREE.CanvasTexture(cv), transparent:true}));
+  spr.position.set(0, 1600, 0); spr.scale.set(3000, 750, 1);
+  scene.add(spr);
+}
+
+// ── Label display mode ────────────────────────────────────────────────────
+let labelMode = 'on'; // 'off' | 'active' | 'on'
+// Cycle order: on → off → active → on …
+// Button always shows what the NEXT click will produce.
+const _lblCycleOrder = ['on', 'off', 'active'];
+const _lblNextLabel  = { on: 'Labels On', off: 'Labels Off', active: 'Active Only' };
+function cycleLabelMode() {
+  const idx = _lblCycleOrder.indexOf(labelMode);
+  labelMode = _lblCycleOrder[(idx + 1) % _lblCycleOrder.length];
+  const btn = document.getElementById('lbl-cycle');
+  if (btn) {
+    btn.textContent = _lblNextLabel[labelMode];
+    btn.classList.toggle('active', labelMode !== 'off');
+  }
+  if (scene) renderZones();
+}
+// Legacy shim so any code still calling setLabelMode() keeps working
+function setLabelMode(mode) {
+  labelMode = mode;
+  const btn = document.getElementById('lbl-cycle');
+  if (btn) {
+    btn.textContent = _lblNextLabel[labelMode] || 'Labels Off';
+    btn.classList.toggle('active', labelMode !== 'off');
+  }
+  if (scene) renderZones();
+}
+
+// ── Altitude formatter: FL for > 5000 ft, ft otherwise, GND for 0 ────────
+function fmtAlt(ft) {
+  if (ft === 0) return 'GND';
+  if (ft > 5000) return 'FL' + Math.round(ft / 100).toString().padStart(3, '0');
+  return ft + ' ft';
+}
+
+function renderZones(){
+  while(zoneGroup.children.length>0){
+    const o=zoneGroup.children[0];zoneGroup.remove(o);
+    if(o.geometry)o.geometry.dispose();
+    if(o.material){Array.isArray(o.material)?o.material.forEach(m=>m.dispose()):o.material.dispose();}
+  }
+  // Collect label metadata before placing sprites so we can resolve overlaps
+  const labelQueue = [];
+  Object.keys(TRA_GEO).forEach(id=>{
+    const geo=TRA_GEO[id],state=traState[id],isActive=!!state;
+    const floorM=geo.floorFt*FT_TO_M;
+    const ceilFt=isActive?state.fl*100:geo.ceilFt;
+    const ceilM=ceilFt*FT_TO_M;
+    const heightM=(ceilM-floorM)*V_SCALE;
+    const shape=polygonToShape(geo.poly);
+    const eg=new THREE.ExtrudeGeometry(shape,{depth:heightM,bevelEnabled:false});
+    eg.rotateX(-Math.PI/2);eg.translate(0,floorM*V_SCALE,0);
+    const color    = isActive ? 0x00e676 : (isDark ? 0x4a5168 : 0x3a4060);
+    const opacity  = isActive ? 0.45    : (isDark ? 0.18     : 0.32);
+    const mat=new THREE.MeshStandardMaterial({color,transparent:true,opacity,side:THREE.DoubleSide,roughness:0.6});
+    zoneGroup.add(new THREE.Mesh(eg,mat));
+    const edgeColor = isActive ? 0x00e676 : (isDark ? 0x333640 : 0x5a6480);
+    const edgeOpac  = isActive ? 0.9      : (isDark ? 0.4      : 0.78);
+    const edgesMat=new THREE.LineBasicMaterial({color:edgeColor,transparent:true,opacity:edgeOpac});
+    zoneGroup.add(new THREE.LineSegments(new THREE.EdgesGeometry(eg),edgesMat));
+    const [cx,cy]=polyCentroid(geo.poly);
+    labelQueue.push({id,geo,isActive,state,wx:cx,wz:-cy,topFt:ceilFt});
+  });
+
+  // In top view, iteratively push overlapping labels apart
+  if(currentView==='top'){
+    const padX=7200, padZ=3600; // slightly larger than sprite footprint (6800×3400)
+    for(let iter=0;iter<120;iter++){
+      for(let i=0;i<labelQueue.length;i++){
+        for(let j=i+1;j<labelQueue.length;j++){
+          const a=labelQueue[i],b=labelQueue[j];
+          const dx=b.wx-a.wx, dz=b.wz-a.wz;
+          const ox=padX-Math.abs(dx), oz=padZ-Math.abs(dz);
+          if(ox>0&&oz>0){
+            // push along axis of smallest overlap
+            if(ox<oz){
+              const push=(ox/2+50)*(dx>=0?1:-1);
+              b.wx+=push; a.wx-=push;
+            } else {
+              const push=(oz/2+50)*(dz>=0?1:-1);
+              b.wz+=push; a.wz-=push;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (labelMode !== 'off') {
+    labelQueue.forEach(lbl => {
+      if (labelMode === 'active' && !lbl.isActive) return;
+      addZoneLabel(lbl.id, lbl.geo, lbl.isActive, lbl.state, lbl.wx, lbl.wz, lbl.topFt);
+    });
+  }
+}
+
+function addZoneLabel(id,geo,isActive,state,wx,wz,topFt){
+  const isTop = currentView === 'top';
+
+  const cvW = isTop ? 640 : 256;
+  const cvH = isTop ? 320 : 128;  // taller to accommodate floor row
+  const cv=document.createElement('canvas'); cv.width=cvW; cv.height=cvH;
+  const c=cv.getContext('2d');
+
+  // ── Theme-aware palette ──
+  // Active zones: always dark bg + vivid green (must pop on any background)
+  // Inactive zones: dark bg + gray text in dark mode; white bg + dark text in light mode
+  const bgFill  = isActive
+    ? 'rgba(0,30,15,0.93)'
+    : (isDark ? 'rgba(18,20,25,0.92)' : 'rgba(238,243,252,0.95)');
+  const borderCol = isActive
+    ? '#00e676'
+    : (isDark ? '#444860' : '#8892b8');
+  const mainColor = isActive
+    ? '#00e676'
+    : (isDark ? '#8a96b4' : '#18203e');
+  const dividerCol = isActive
+    ? '#00e67670'
+    : (isDark ? '#44486070' : '#8892b860');
+  const floorColor = isActive
+    ? '#00e676aa'
+    : (isDark ? '#8a96b490' : '#18203e90');
+
+  c.fillStyle = bgFill;
+  c.fillRect(0, 0, cvW, cvH);
+  c.strokeStyle = borderCol;
+  c.lineWidth=isTop?4:2; c.strokeRect(2,2,cvW-4,cvH-4);
+
+  const idFontSz  = isTop ? 100 : 34;
+  const subFontSz = isTop ? 52  : 19;
+
+  // ── Row 1: Zone ID ──
+  c.fillStyle=mainColor;
+  c.font=`bold ${idFontSz}px monospace`;
+  c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(id, cvW/2, cvH*0.22);
+
+  // ── Row 2: Ceiling (top height) ──
+  c.font=`${subFontSz}px monospace`;
+  const ceilLabel = isActive
+    ? `FL${state.fl} ✓`
+    : topFt > 5000 ? `FL${Math.round(topFt/100)}` : `${topFt} ft`;
+  c.fillText(ceilLabel, cvW/2, cvH*0.47);
+
+  // ── Horizontal divider line ──
+  const lineY = Math.round(cvH * 0.615);
+  const margin = cvW * 0.10;
+  c.save();
+  c.strokeStyle = dividerCol;
+  c.lineWidth = isTop ? 2 : 1;
+  c.beginPath(); c.moveTo(margin, lineY); c.lineTo(cvW-margin, lineY); c.stroke();
+  c.restore();
+
+  // ── Row 3: Floor (bottom height) ──
+  const floorText = geo.floorFt === 0 ? 'GND'
+    : geo.floorFt > 5000 ? `FL${Math.round(geo.floorFt/100)}` : `${geo.floorFt} ft`;
+  c.fillStyle = floorColor;
+  c.font=`${subFontSz}px monospace`;
+  c.fillText(floorText, cvW/2, cvH*0.81);
+
+  const sprW = isTop ? 6800 : 2500;
+  const sprH = isTop ? 3400 : 1280;  // adjusted to match new canvas aspect ratio
+  const yPos = (topFt*FT_TO_M)*V_SCALE + (isTop ? 200 : 800);
+
+  const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthTest:false}));
+  spr.position.set(wx, yPos, wz);
+  spr.scale.set(sprW, sprH, 1);
+  spr.renderOrder=999;
+  zoneGroup.add(spr);
+}
+
+function updateCameraPosition(){
+  if(!camera)return;
+  if(currentView==='top'){
+    camera.position.set(camTarget.x,60000,-camTarget.y);
+    camera.up.set(0,0,-1);camera.lookAt(camTarget.x,0,-camTarget.y);
+  } else {
+    camera.up.set(0,1,0);
+    camera.position.set(
+      camTarget.x+camDist*Math.sin(camAngleH)*Math.cos(camAngleV),
+      camDist*Math.sin(camAngleV),
+      -camTarget.y+camDist*Math.cos(camAngleH)*Math.cos(camAngleV)
+    );
+    camera.lookAt(camTarget.x,camTarget.z*V_SCALE,-camTarget.y);
+  }
+}
+
+function setupMouseControls(el){
+  let lx=0,ly=0;
+  el.addEventListener('mousedown',e=>{isDragging=true;dragMode=e.button===2?'pan':'rotate';lx=e.clientX;ly=e.clientY;e.preventDefault();});
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+  window.addEventListener('mousemove',e=>{
+    if(!isDragging)return;
+    const dx=e.clientX-lx,dy=e.clientY-ly;
+    if(currentView==='iso'&&dragMode==='rotate'){camAngleH-=dx*0.01;camAngleV=Math.max(0.1,Math.min(Math.PI/2-.05,camAngleV+dy*0.01));}
+    else if(dragMode==='pan'){const pf=camDist/800;camTarget.x-=dx*pf*Math.cos(camAngleH);camTarget.y+=dy*pf;}
+    lx=e.clientX;ly=e.clientY;updateCameraPosition();
+  });
+  window.addEventListener('mouseup',()=>{isDragging=false;});
+  el.addEventListener('wheel',e=>{e.preventDefault();camDist=Math.max(3000,Math.min(120000,camDist+e.deltaY*50));updateCameraPosition();},{passive:false});
+}
+
+function setView(v){
+  currentView=v;
+  const btn = document.getElementById('btn-view-toggle');
+  if (btn) btn.textContent = v === 'iso' ? 'ISO' : 'TOP';
+  updateCameraPosition();
+  if(scene) renderZones(); // re-render labels at correct size for this view
+}
+function toggleView(){ setView(currentView==='iso'?'top':'iso'); }
+
+function onResize(){
+  const c=document.getElementById('viz3d');
+  if(!c||!camera||!renderer)return;
+  const w=c.clientWidth,h=c.clientHeight;
+  if(!w||!h)return;
+  camera.aspect=w/h;camera.updateProjectionMatrix();
+  renderer.setSize(w,h);updateCameraPosition();
+}
+
+function animate(){requestAnimationFrame(animate);if(renderer&&scene&&camera)renderer.render(scene,camera);}
+
+if(document.readyState==='complete') initViz();
+else window.addEventListener('load',initViz);
+
+// Resize observer for viz pane
+const ro = new ResizeObserver(onResize);
+ro.observe(document.getElementById('viz3d'));
+
+// ─── FT ↔ M CONVERTER ────────────────────────────────────────────────────
+let ftmOpen = false;
+function toggleFtm() {
+  ftmOpen = !ftmOpen;
+  const panel = document.getElementById('ftm-panel');
+  const btn   = document.getElementById('ftm-btn');
+  panel.style.display = ftmOpen ? 'flex' : 'none';
+  btn.style.borderColor  = ftmOpen ? 'var(--accent2)' : 'var(--border2)';
+  btn.style.color        = ftmOpen ? 'var(--accent2)' : 'var(--dim)';
+  if (ftmOpen) document.getElementById('ftm-ft').focus();
+}
+function ftmConvert(from) {
+  const ftEl = document.getElementById('ftm-ft');
+  const mEl  = document.getElementById('ftm-m');
+  if (from === 'ft') {
+    const v = parseFloat(ftEl.value);
+    if (!isNaN(v)) {
+      mEl.value = (v * 0.3048).toFixed(1);
+      mEl.style.background = '#0a1a10';
+      ftEl.style.background = 'var(--bg)';
+    } else { mEl.value = ''; mEl.style.background = 'var(--bg)'; }
+  } else {
+    const v = parseFloat(mEl.value);
+    if (!isNaN(v)) {
+      ftEl.value = (v / 0.3048).toFixed(1);
+      ftEl.style.background = '#0a1a10';
+      mEl.style.background = 'var(--bg)';
+    } else { ftEl.value = ''; ftEl.style.background = 'var(--bg)'; }
+  }
+}
+// Close ftm panel when clicking outside
+document.addEventListener('click', e => {
+  if (ftmOpen && !e.target.closest('#ftm-wrap')) {
+    ftmOpen = false;
+    document.getElementById('ftm-panel').style.display = 'none';
+    const btn = document.getElementById('ftm-btn');
+    btn.style.borderColor = 'var(--border2)';
+    btn.style.color = 'var(--dim)';
+  }
+});
+</script>
+</body>
+</html>
