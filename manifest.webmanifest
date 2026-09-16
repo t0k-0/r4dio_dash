@@ -1,0 +1,25 @@
+{
+  "name": "R4DIO DASH",
+  "short_name": "R4DIO DASH",
+  "description": "Czech airfield traffic, airspace and radio monitoring dashboard.",
+  "lang": "cs",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b0c0f",
+  "theme_color": "#0b0c0f",
+  "icons": [
+    {
+      "src": "icon_darkmode.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icon_lightmode.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
