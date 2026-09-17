@@ -8,7 +8,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" id="app-theme-color" content="#0b0c0f">
 <meta name="application-name" content="R4DIO DASH">
-<link rel="icon" id="app-favicon" type="image/svg+xml" href="icon_darkmode.svg">
+<link rel="icon" id="app-favicon" type="image/svg+xml" sizes="any" href="icon_darkmode.svg">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -60,6 +60,18 @@
   --ops-h:     68px;
 }
 
+/* Match the device theme before JavaScript runs, preventing a dark-theme flash on light devices. */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:#f0f2f5;--bg2:#e4e7ed;--bg3:#d8dce5;--border:#c4c8d0;--border2:#b0b5c0;
+    --text:#1a1d24;--bright:#0a0c10;--mid:#3a4050;--dim:#6a7080;
+    --row-even:#e5e9ef;--row-even-hover:#d7dde6;--row-odd-hover:#e9edf3;--row-selected:#d8edf7;
+    --row-warning:#fff1dc;--row-alert:#ffe5e5;--row-alert-pulse:#ffd2d2;
+    --emg-bg:#fff1f1;--emg-border:#d99a9a;--emg-accent:#aa1525;--emg-emphasis:#9f1717;
+    --advisory-bg:#fff8dc;--advisory-border:#b7962f;--advisory-text:#5b4700;
+  }
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -100,9 +112,27 @@ html, body {
 .strip-unit { min-width:0;height:30px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;background:var(--bg3);display:flex;align-items:center;justify-content:center; }
 .strip-sep { display:none; }
 .strip-sep.site-divider { display:block;width:1px;height:26px;margin:0 5px;background:var(--border2);flex:none; }
-.app-brand { display:flex;align-items:center;gap:6px;height:30px;min-width:0;color:var(--bright);font:700 11px var(--mono);letter-spacing:1px;white-space:nowrap; }
-.app-brand img { width:24px;height:24px;display:block;object-fit:contain; }
-.app-brand img[hidden] { display:none; }
+#app-loading-screen { --loading-ink:var(--bright);position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:var(--bg);color:var(--loading-ink);opacity:1;visibility:visible;transition:opacity .16s steps(3,end),visibility .16s; }
+#app-loading-screen.is-hidden { opacity:0;visibility:hidden;pointer-events:none; }
+.app-loading-lockup { display:flex;flex-direction:column;align-items:center;gap:13px;color:var(--loading-ink); }
+.app-loading-logo-stage { position:relative;width:108px;height:82px;display:grid;place-items:center;animation:app-loading-stage .18s steps(2,end) both; }
+.app-loading-logo-stage::before,.app-loading-logo-stage::after { content:'';position:absolute;width:16px;height:16px;border-color:var(--loading-ink);opacity:.55;animation:app-loading-corners .3s .08s steps(3,end) both; }
+.app-loading-logo-stage::before { inset:0 auto auto 0;border-style:solid none none solid;border-width:1px; }
+.app-loading-logo-stage::after { inset:auto 0 0 auto;border-style:none solid solid none;border-width:1px; }
+.app-loading-logo-picture { display:block;width:82px;height:58px; }
+.app-loading-logo { position:relative;z-index:1;width:82px;height:58px;display:block;object-fit:contain;animation:app-loading-logo .34s .04s steps(4,end) both; }
+.app-loading-title { display:flex;align-items:center;justify-content:center;gap:0;font:700 20px var(--mono);letter-spacing:4px;line-height:1;white-space:pre; }
+.app-loading-title span { display:inline-block;opacity:0;animation:app-loading-key .18s steps(2,end) forwards;animation-delay:calc(.18s + var(--i) * 34ms); }
+.app-loading-progress { position:relative;width:128px;height:2px;margin-top:3px;overflow:hidden;background:color-mix(in srgb,var(--loading-ink) 18%,transparent); }
+.app-loading-progress::after { content:'';position:absolute;inset:0;width:34%;background:var(--loading-ink);animation:app-loading-scan .46s steps(6,end) infinite; }
+@keyframes app-loading-stage { from { opacity:0;transform:translateY(-3px); } to { opacity:1;transform:none; } }
+@keyframes app-loading-logo { 0% { opacity:0;transform:translateY(-7px) scale(.97); } 70% { opacity:1;transform:translateY(2px) scale(1.01,.96); } 100% { opacity:1;transform:none; } }
+@keyframes app-loading-corners { from { opacity:0;transform:scale(.7); } to { opacity:.55;transform:none; } }
+@keyframes app-loading-key { 0% { opacity:0;transform:translateY(-5px) scaleY(1.08); } 55% { opacity:1;transform:translateY(2px) scaleY(.9); } 100% { opacity:1;transform:none; } }
+@keyframes app-loading-scan { from { transform:translateX(-105%); } to { transform:translateX(400%); } }
+@media (prefers-reduced-motion:reduce) {
+  #app-loading-screen,.app-loading-logo-stage,.app-loading-logo,.app-loading-title span,.app-loading-logo-stage::before,.app-loading-logo-stage::after,.app-loading-progress::after { animation:none;transition:none;opacity:1;transform:none; }
+}
 #metar-pill {
   display: flex;
   align-items: center;
@@ -1437,20 +1467,28 @@ html, body {
   #metar-strip { gap:3px;padding:0 4px; }
   .strip-unit { padding-left:5px;padding-right:5px; }
   #metar-age { display:none; }
-  .app-brand-name { display:none; }
 }
 </style>
 </head>
 <body>
 
+<div id="app-loading-screen" role="status" aria-label="R4DIO DASH is loading">
+  <div class="app-loading-lockup">
+    <div class="app-loading-logo-stage" aria-hidden="true">
+      <picture class="app-loading-logo-picture">
+        <source id="app-loading-logo-source" media="(prefers-color-scheme: light)" srcset="icon_lightmode.svg">
+        <img class="app-loading-logo" id="app-loading-logo" src="icon_darkmode.svg" alt="">
+      </picture>
+    </div>
+    <div class="app-loading-title" aria-label="R4DIO DASH"><span aria-hidden="true" style="--i:0">R</span><span aria-hidden="true" style="--i:1">4</span><span aria-hidden="true" style="--i:2">D</span><span aria-hidden="true" style="--i:3">I</span><span aria-hidden="true" style="--i:4">O</span><span aria-hidden="true" style="--i:5"> </span><span aria-hidden="true" style="--i:6">D</span><span aria-hidden="true" style="--i:7">A</span><span aria-hidden="true" style="--i:8">S</span><span aria-hidden="true" style="--i:9">H</span></div>
+    <div class="app-loading-progress" aria-hidden="true"></div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════════ -->
 <!--  METAR STRIP                                   -->
 <!-- ══════════════════════════════════════════════ -->
 <div id="metar-strip">
-  <div class="app-brand" title="R4DIO DASH">
-    <img id="app-ui-icon" src="icon_darkmode.svg" alt="" onload="this.hidden=false" onerror="this.hidden=true">
-    <span class="app-brand-name">R4DIO DASH</span>
-  </div>
   <button class="site-button strip-unit" id="site-selector" onclick="openLocation()" title="Choose monitored waypoint and airspace">
     <span id="site-code">LKKO</span>
   </button>
@@ -1988,6 +2026,8 @@ html, body {
 <script>
 'use strict';
 
+const APP_LOADING_STARTED_AT=performance.now();
+
 // Clear all persisted R4DIO DASH operational state at each local midnight.
 const RADIO_WATCH_DAY_KEY='radioWatchStorageDay';
 const RADIO_WATCH_STORAGE_PREFIXES=['radioWatch','rw_'];
@@ -2064,7 +2104,7 @@ function applyUiLanguage(rerender=true){
   document.querySelectorAll('[data-i18n-placeholder]').forEach(element=>{element.placeholder=t(element.dataset.i18nPlaceholder);});
   document.getElementById('lang-en')?.classList.toggle('active',uiLanguage==='en');
   document.getElementById('lang-cz')?.classList.toggle('active',uiLanguage==='cz');
-  const themeButton=document.getElementById('theme-btn');if(themeButton)themeButton.textContent=isDark?t('dark'):t('light');
+  const themeButton=document.getElementById('theme-btn');if(themeButton){themeButton.textContent=isDark?t('dark'):t('light');themeButton.classList.toggle('active',isDark);}
   renderSdrSettings();
   if(!rerender)return;
   syncInactiveAirspaceControls();updateLiveTrafficStatus();render();renderTrackedFlightsDrawer();renderNearbyFrequencyContacts();
@@ -2075,7 +2115,8 @@ function setUiLanguage(language){
 function syncAppIdentity(){
   const iconPath=isDark?'icon_darkmode.svg':'icon_lightmode.svg';
   const favicon=document.getElementById('app-favicon');if(favicon)favicon.href=iconPath;
-  const uiIcon=document.getElementById('app-ui-icon');if(uiIcon){uiIcon.hidden=false;uiIcon.src=iconPath;}
+  const loadingSource=document.getElementById('app-loading-logo-source');if(loadingSource)loadingSource.srcset=iconPath;
+  const loadingLogo=document.getElementById('app-loading-logo');if(loadingLogo)loadingLogo.src=iconPath;
   const themeColor=document.getElementById('app-theme-color');if(themeColor)themeColor.content=isDark?'#0b0c0f':'#f0f2f5';
 }
 
@@ -4697,7 +4738,8 @@ function closePresets(){ document.getElementById('presets-overlay').classList.re
 let currentTopView = 'both'; // split, map, list, tracker split, or tracker
 
 // ─── THEME ────────────────────────────────────────────────────────────────
-let isDark = true;
+const deviceThemeQuery=window.matchMedia?.('(prefers-color-scheme: dark)');
+let isDark=deviceThemeQuery?deviceThemeQuery.matches:true;
 function toggleTheme() {
   isDark = !isDark;
   document.getElementById('theme-btn').textContent = isDark ? t('dark') : t('light');
@@ -6253,6 +6295,13 @@ document.addEventListener('click', e => {
     closeFtm();
   }
 });
+function dismissAppLoadingScreen(){
+  const screen=document.getElementById('app-loading-screen');if(!screen)return;
+  const delay=Math.max(0,760-(performance.now()-APP_LOADING_STARTED_AT));
+  setTimeout(()=>{screen.classList.add('is-hidden');setTimeout(()=>screen.remove(),260);},delay);
+}
+if(document.readyState==='complete')dismissAppLoadingScreen();
+else window.addEventListener('load',dismissAppLoadingScreen,{once:true});
 syncAppIdentity();
 applyUiLanguage();
 </script>

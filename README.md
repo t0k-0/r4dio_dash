@@ -40,7 +40,9 @@ Run `npm run build:pages` to produce the same `_site` bundle locally. The genera
 
 ## Icon files
 
-Place `icon_darkmode.svg` and `icon_lightmode.svg` in the repository root. R4DIO DASH switches them with the app theme in the browser tab and the top-left product mark. They are also referenced by `manifest.webmanifest`; the interface hides the image cleanly while the files have not yet been supplied.
+The repository-root `icon_darkmode.svg` and `icon_lightmode.svg` files are used in the browser tab and a brief animated startup screen. Its single-colour, theme-responsive treatment uses a tactile logo press, a mechanical letter-by-letter title reveal and a stepped progress scan; reduced-motion preferences disable the animation. The normal top strip retains its compact airport-first layout without permanent product branding. Both icons are also referenced by `manifest.webmanifest`.
+
+On every launch, the initial light or dark appearance follows the device's `prefers-color-scheme` setting. The in-app theme button can still switch the current session manually.
 
 ## Publishing the complete Node website
 
