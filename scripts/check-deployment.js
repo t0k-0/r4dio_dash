@@ -5,6 +5,8 @@ const root = path.resolve(__dirname, '..');
 const requiredFiles = [
   ['index.html', 100000],
   ['radio-watch-server.js', 5000],
+  ['LICENSE', 10000],
+  ['NOTICE', 300],
   ['three.min.js', 500000],
   ['polygon-clipping.min.js', 20000],
   ['aviation-data.js', 8000],

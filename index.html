@@ -2093,6 +2093,8 @@ Object.assign(UI_TEXT.cz,{radioStartSilent:'Tich\u00fd RX',radioStopSilent:'Zast
 Object.assign(UI_TEXT.en,{radioMuteRequested:'MUTE REQUESTED',radioMuteConfirmed:'SYSTEM MUTED / RX',radioMuteReleasing:'RESTORING SYSTEM AUDIO',radioMuteRestored:'SYSTEM AUDIO RESTORED',radioMuteFailed:'MUTE FAILED',radioCooldown:'MUTED / COOLDOWN'});
 Object.assign(UI_TEXT.cz,{radioMuteRequested:'PO\u017dADAVEK NA ZTLUMEN\u00cd',radioMuteConfirmed:'SYST\u00c9M ZTLUMEN / RX',radioMuteReleasing:'OBNOVUJI ZVUK SYST\u00c9MU',radioMuteRestored:'ZVUK SYST\u00c9MU OBNOVEN',radioMuteFailed:'ZTLUMEN\u00cd SELHALO',radioCooldown:'ZTLUMENO / OCHRANN\u00c1 DOBA'});
 Object.assign(UI_TEXT.en,{trackerStatsTitle:'Tracker details',trackerLocalCount:'Local targets',trackerLastUpdate:'Last update',trackerNextUpdate:'Next refresh',trackerFeedHealthy:'Connected'});
+Object.assign(UI_TEXT.en,{trafficRelayMissing:'Live traffic relay is not configured for this website'});
+Object.assign(UI_TEXT.cz,{trafficRelayMissing:'Datov\u00fd server \u017eiv\u00e9ho provozu nen\u00ed pro tento web nastaven'});
 Object.assign(UI_TEXT.cz,{trackerStatsTitle:'Podrobnosti trackeru',trackerLocalCount:'M\u00edstn\u00ed c\u00edle',trackerLastUpdate:'Posledn\u00ed aktualizace',trackerNextUpdate:'Dal\u0161\u00ed aktualizace',trackerFeedHealthy:'P\u0159ipojeno'});
 const storedUiLanguage=localStorage.getItem('radioWatchLanguage');
 let uiLanguage=storedUiLanguage==='en'?'en':'cz';
@@ -2959,6 +2961,9 @@ let metarStationChoicesOpen=false;
 const METAR_STATION_CODES=['LKBC','LKCR','LKCS','LKCV','LKKB','LKKU','LKKV','LKLN','LKMH','LKMT','LKNA','LKPD','LKPJ','LKPR','LKTB','LKTH','LKVO'];
 const RADIO_WATCH_QUERY=new URLSearchParams(location.search);
 const RADIO_WATCH_API_BASE=(RADIO_WATCH_QUERY.get('apiBase')||document.querySelector('meta[name="r4dio-dash-api-base"]')?.content||document.querySelector('meta[name="radio-watch-api-base"]')?.content||'').trim();
+const RADIO_WATCH_TRAFFIC_ENDPOINT_OVERRIDE=(RADIO_WATCH_QUERY.get('trafficEndpoint')||'').trim();
+const RADIO_WATCH_TRAFFIC_RELAY_CONFIGURED=Boolean(RADIO_WATCH_API_BASE||RADIO_WATCH_TRAFFIC_ENDPOINT_OVERRIDE);
+const RADIO_WATCH_UNCONFIGURED_GITHUB_PAGES=/\.github\.io$/i.test(location.hostname)&&!RADIO_WATCH_TRAFFIC_RELAY_CONFIGURED;
 function resolveRadioWatchEndpoint(parameter,path){
   const explicit=RADIO_WATCH_QUERY.get(parameter);
   if(explicit)return explicit;
@@ -5360,6 +5365,7 @@ function syncTrafficInfoForLayout(){
   if(track&&trafficInfoAllowedForLayout())showTrafficInfo(track);else closeTrafficInfo();
 }
 async function fetchLiveTraffic(){
+  if(RADIO_WATCH_UNCONFIGURED_GITHUB_PAGES)throw new Error(t('trafficRelayMissing'));
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
   liveTrafficAbortController=controller;
   try{
@@ -5367,6 +5373,7 @@ async function fetchLiveTraffic(){
     const response=await fetch(`${LIVE_TRAFFIC_URL}${separator}_=${Date.now()}`,{mode:'cors',cache:'no-store',signal:controller.signal});
     const payload=await response.json().catch(()=>null);
     if(!response.ok||!payload){
+      if(response.status===404&&!RADIO_WATCH_TRAFFIC_RELAY_CONFIGURED)throw new Error(t('trafficRelayMissing'));
       const detail=Object.entries(payload?.feeds||{}).map(([name,state])=>`${name}: ${state.error||'unavailable'}`).join(' · ');
       throw new Error(payload?.error||detail||`traffic API HTTP ${response.status}`);
     }

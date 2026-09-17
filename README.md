@@ -27,21 +27,33 @@ Aplikace má za úkol efektivně využít prostor obrazovky během leteckého pr
 | Tlačítko nastavení             | *Otevírá okno nastavení aplikace. Nastavení shora: limity časovače kontaktu, notifikace prohlížeče, Vzhled (nedoporučeno), Tlačítko správy presetů, Nastavení klávesových zkratek, seznam needitovatelných zkratek.*                                                                                                                                                                                                  |
 | -> Správa presetů              | *Otevírá okno správy presetů. Nahoře je možnost hromadného smazání všech presetů, zelený řádek umožňuje načíst přednastavený balíček často aktivních letadel pro LKKO, Seznam umožňuje odstranit jednotlivé presety. Sloty dole umožňují přidání nového presetu letadla*                                                                                                                                               |
 
-**GitHub Pages preview:** https://t0k-0.github.io/radio_dash_lkko/
+**GitHub Pages preview:** https://t0k-0.github.io/r4dio_dash/
 
 ## GitHub Pages deployment
 
 The repository includes `.github/workflows/pages.yml`. A push to `main` builds a static `_site` bundle and deploys it through GitHub Pages. In the repository settings, select **GitHub Actions** as the Pages source. All map, picker, waypoint, airspace, manual-traffic and browser RTL-SDR features use repository-relative URLs and therefore work under the normal `https://<owner>.github.io/<repository>/` subpath.
 
-GitHub Pages cannot execute `radio-watch-server.js`. To retain live ADS-B/OGN traffic and METAR, deploy the included Node relay separately over HTTPS and create the repository Actions variable `R4DIO_DASH_API_BASE` with its origin, for example `https://r4dio-dash-cz.onrender.com`. The Pages build writes that origin into the generated site without modifying the source `index.html`. The `?apiBase=https://...` query override remains available for testing. Without a relay, the static application still loads normally and server-dependent features report unavailable instead of blocking the app.
+GitHub Pages cannot execute `radio-watch-server.js`. To retain live ADS-B/OGN traffic and METAR, deploy the included Node relay separately over HTTPS and create the repository Actions variable `R4DIO_DASH_API_BASE` with its origin, for example `https://r4dio-dash-cz.onrender.com`. The Pages build writes that origin into the generated site without modifying the source `index.html`. The `?apiBase=https://...` query override remains available for testing. Without a relay, the static application still loads normally and reports that its live-data relay is not configured instead of requesting a nonexistent Pages route and displaying an HTTP 404.
 
 Run `npm run build:pages` to produce the same `_site` bundle locally. The generated directory is ignored by Git.
+
+For the complete relay deployment, verification URLs, GitHub variable setup,
+Pages rebuild, and troubleshooting sequence, follow
+[`GITHUB_PAGES_TRAFFIC_SETUP.md`](GITHUB_PAGES_TRAFFIC_SETUP.md).
 
 ## Icon files
 
 The repository-root `icon_darkmode.svg` and `icon_lightmode.svg` files are used in the browser tab and a brief animated startup screen. Its single-colour, theme-responsive treatment uses a tactile logo press, a mechanical letter-by-letter title reveal and a stepped progress scan; reduced-motion preferences disable the animation. The normal top strip retains its compact airport-first layout without permanent product branding. Both icons are also referenced by `manifest.webmanifest`.
 
 On every launch, the initial light or dark appearance follows the device's `prefers-color-scheme` setting. The in-app theme button can still switch the current session manually.
+
+## Licence
+
+R4DIO DASH's original software is licensed under the
+[Apache License 2.0](LICENSE). Replace the bracketed copyright-holder name in
+[`NOTICE`](NOTICE) before publishing a release. Third-party components remain
+under their own licences and notices; in particular, the Apache-2.0 licence for
+the vendored Web RTL-SDR driver remains at `vendor/webrtlsdr/LICENSE`.
 
 ## Publishing the complete Node website
 

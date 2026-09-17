@@ -1,6 +1,7 @@
 {
   "name": "r4dio-dash-cz",
   "version": "1.0.0",
+  "license": "Apache-2.0",
   "private": true,
   "description": "R4DIO DASH Czech airfield dashboard with live ADS-B, OGN and METAR relays",
   "scripts": {

@@ -7,6 +7,8 @@ const outputRoot = path.join(projectRoot, '_site');
 const requiredFiles = [
   'index.html',
   'manifest.webmanifest',
+  'LICENSE',
+  'NOTICE',
   'aviation-data.js',
   'three.min.js',
   'polygon-clipping.min.js',

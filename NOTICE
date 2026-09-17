@@ -1,0 +1,13 @@
+R4DIO DASH
+Copyright 2026 [TOBIÁŠ KUBELKA]
+For any correspondence please contact via email: tk0@email.cz
+
+Licensed under the Apache License, Version 2.0. See LICENSE for the full terms.
+
+This distribution includes third-party software whose original licence notices
+remain applicable:
+
+- @jtarrio/webrtlsdr — Apache License 2.0; see vendor/webrtlsdr/LICENSE.
+- Three.js — MIT; its copyright and SPDX notice are retained in three.min.js.
+- polygon-clipping and bundled components — their MIT and Apache-2.0 notices
+  are retained in polygon-clipping.min.js.
