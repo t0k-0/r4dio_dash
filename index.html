@@ -295,7 +295,7 @@ html, body {
   position: relative;
   overflow: hidden;
 }
-#viz3d canvas { display: block; outline: none; width: 100% !important; height: 100% !important; }
+#viz3d canvas { display:block;outline:none;width:100%!important;height:100%!important;touch-action:none;user-select:none; }
 .leg-item { display: flex; align-items: center; gap: 5px; }
 .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .settings-legend { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 14px;padding:9px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg);font:10px var(--mono);color:var(--mid); }
@@ -6150,11 +6150,29 @@ function setTrackerMapMode(enabled){
 }
 
 function setupMouseControls(el){
-  let lx=0,ly=0;
-  el.addEventListener('mousedown',e=>{isDragging=true;dragMode=isPlanView()||e.button===2?'pan':'rotate';lx=e.clientX;ly=e.clientY;e.preventDefault();});
+  let lx=0,ly=0,activePointerId=null;
+  const finishDrag=(event,rebuild=true)=>{
+    if(event?.pointerId!=null&&activePointerId!=null&&event.pointerId!==activePointerId)return;
+    const pointerId=activePointerId,wasDragging=isDragging,wasPan=dragMode==='pan';
+    activePointerId=null;isDragging=false;dragMode=null;
+    if(pointerId!=null&&el.hasPointerCapture?.(pointerId)){
+      try{el.releasePointerCapture(pointerId);}catch{}
+    }
+    if(rebuild&&wasDragging&&wasPan&&mapLayerOn)rebuildMapLayer();
+  };
+  el.addEventListener('pointerdown',e=>{
+    if(e.button!==0&&e.button!==2)return;
+    if(isDragging)finishDrag(null,false);
+    activePointerId=e.pointerId;isDragging=true;dragMode=isPlanView()||e.button===2?'pan':'rotate';lx=e.clientX;ly=e.clientY;
+    try{el.setPointerCapture(e.pointerId);}catch{}
+    e.preventDefault();
+  });
   el.addEventListener('contextmenu',e=>e.preventDefault());
-  window.addEventListener('mousemove',e=>{
-    if(!isDragging)return;
+  window.addEventListener('pointermove',e=>{
+    if(!isDragging||e.pointerId!==activePointerId)return;
+    // A release outside the browser can occasionally miss pointerup. The buttons
+    // state on the next mouse movement is an authoritative fallback.
+    if(e.pointerType==='mouse'&&e.buttons===0){finishDrag(e);return;}
     const dx=e.clientX-lx,dy=e.clientY-ly;
     if(currentView==='iso'&&dragMode==='rotate'){
       camAngleH=(camAngleH-dx*.01)%(Math.PI*2);if(camAngleH<0)camAngleH+=Math.PI*2;
@@ -6169,7 +6187,11 @@ function setupMouseControls(el){
     }
     lx=e.clientX;ly=e.clientY;updateCameraPosition();
   });
-  window.addEventListener('mouseup',()=>{const rebuildMap=isDragging&&dragMode==='pan';isDragging=false;if(rebuildMap&&mapLayerOn)rebuildMapLayer();});
+  window.addEventListener('pointerup',e=>finishDrag(e));
+  window.addEventListener('pointercancel',e=>finishDrag(e));
+  el.addEventListener('lostpointercapture',e=>finishDrag(e));
+  window.addEventListener('blur',()=>finishDrag());
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)finishDrag();});
   el.addEventListener('wheel',e=>{
     e.preventDefault();
     const previousZoom=mapTileZoom;
