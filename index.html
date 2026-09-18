@@ -1731,9 +1731,9 @@ html, body {
     <div class="detach-wrap">
       <button class="ops-btn detach-btn" id="detach-btn" onclick="toggleDetachMenu(event)" title="Open a view in another window" aria-label="Open a view in another window">&#x29C9;</button>
       <div class="detach-menu" id="detach-menu" onclick="event.stopPropagation()">
-        <button onclick="openDetachedPanel('tracker')"><span>TRACKER VIEW</span><span>&#x2197;</span></button>
-        <button onclick="openDetachedPanel('map')"><span>MAP / 3D VIEW</span><span>&#x2197;</span></button>
-        <button onclick="openDetachedPanel('list')"><span>AIRCRAFT LIST</span><span>&#x2197;</span></button>
+        <button type="button" onpointerdown="armDetachedPanel('tracker',event)" onclick="openDetachedPanel('tracker',event)"><span>TRACKER VIEW</span><span>&#x2197;</span></button>
+        <button type="button" onpointerdown="armDetachedPanel('map',event)" onclick="openDetachedPanel('map',event)"><span>MAP / 3D VIEW</span><span>&#x2197;</span></button>
+        <button type="button" onpointerdown="armDetachedPanel('list',event)" onclick="openDetachedPanel('list',event)"><span>AIRCRAFT LIST</span><span>&#x2197;</span></button>
       </div>
     </div>
   </div>
@@ -4908,7 +4908,10 @@ document.addEventListener('keydown', e => {
 let scene, camera, perspectiveCamera, topCamera, renderer, zoneGroup, mapGroup, markerGroup, trafficGroup;
 let currentView = 'top';
 let trackerMapMode=false,trackerRestoreState=null;
-let isDragging = false, dragMode = null;
+let isDragging=false,dragMode=null,lastViewportSecondaryGestureAt=-Infinity;
+window.addEventListener('beforeunload',event=>{
+  if(performance.now()-lastViewportSecondaryGestureAt<1600){event.preventDefault();event.returnValue='';}
+});
 let camAngleH = Math.PI/4, camAngleV = 0.6, camDist = 38000;
 let camTarget = { x: 0, y: 0, z: 1500 };
 const V_SCALE = 2;
@@ -5013,7 +5016,15 @@ function closeDetachMenu(){
   const menu=document.getElementById('detach-menu'),wrap=menu?.closest('.detach-wrap');menu?.classList.remove('show');menu?.closest('.view-popout-cluster')?.classList.remove('detach-open');
   if(wrap?.contains(document.activeElement))document.activeElement.blur();
 }
-function openDetachedPanel(kind){
+let detachedPanelActivation=null;
+function armDetachedPanel(kind,event){
+  detachedPanelActivation=event.button===0?{kind,pointerId:event.pointerId,x:event.clientX,y:event.clientY,at:performance.now()}:null;
+}
+function openDetachedPanel(kind,event){
+  const keyboardActivation=event?.detail===0;
+  const armed=detachedPanelActivation&&detachedPanelActivation.kind===kind&&performance.now()-detachedPanelActivation.at<800&&Math.hypot(event.clientX-detachedPanelActivation.x,event.clientY-detachedPanelActivation.y)<6;
+  detachedPanelActivation=null;
+  if(!keyboardActivation&&!armed)return;
   closeDetachMenu();
   const url=new URL(location.href);url.searchParams.set('popout',kind);
   const width=Math.max(720,Math.floor(screen.availWidth*.86)),height=Math.max(560,Math.floor(screen.availHeight*.86));
@@ -6157,7 +6168,13 @@ function setTrackerMapMode(enabled){
 }
 
 function setupMouseControls(el){
-  let lx=0,ly=0,activePointerId=null;
+  let lx=0,ly=0,activePointerId=null,blockedSecondaryPointerId=null;
+  el.title='Viewport: left drag rotates in ISO; Shift + left drag or middle drag pans; wheel zooms';
+  const finishBlockedSecondary=event=>{
+    if(event?.pointerId!=null&&blockedSecondaryPointerId!=null&&event.pointerId!==blockedSecondaryPointerId)return;
+    const pointerId=blockedSecondaryPointerId;blockedSecondaryPointerId=null;
+    if(pointerId!=null&&el.hasPointerCapture?.(pointerId)){try{el.releasePointerCapture(pointerId);}catch{}}
+  };
   const finishDrag=(event,rebuild=true)=>{
     if(event?.pointerId!=null&&activePointerId!=null&&event.pointerId!==activePointerId)return;
     const pointerId=activePointerId,wasDragging=isDragging,wasPan=dragMode==='pan';
@@ -6168,14 +6185,21 @@ function setupMouseControls(el){
     if(rebuild&&wasDragging&&wasPan&&mapLayerOn)rebuildMapLayer();
   };
   el.addEventListener('pointerdown',e=>{
-    if(e.button!==0&&e.button!==2)return;
+    if(e.button===2){
+      lastViewportSecondaryGestureAt=performance.now();blockedSecondaryPointerId=e.pointerId;
+      try{el.setPointerCapture(e.pointerId);}catch{}
+      e.preventDefault();e.stopPropagation();return;
+    }
+    if(e.button!==0&&e.button!==1)return;
     if(isDragging)finishDrag(null,false);
-    activePointerId=e.pointerId;isDragging=true;dragMode=isPlanView()||e.button===2?'pan':'rotate';lx=e.clientX;ly=e.clientY;
+    activePointerId=e.pointerId;isDragging=true;dragMode=isPlanView()||e.button===1||e.shiftKey?'pan':'rotate';lx=e.clientX;ly=e.clientY;
     try{el.setPointerCapture(e.pointerId);}catch{}
     e.preventDefault();
   });
-  el.addEventListener('contextmenu',e=>e.preventDefault());
+  el.addEventListener('contextmenu',e=>{lastViewportSecondaryGestureAt=performance.now();e.preventDefault();e.stopPropagation();});
+  el.addEventListener('auxclick',e=>{if(e.button===1||e.button===2)e.preventDefault();});
   window.addEventListener('pointermove',e=>{
+    if(e.pointerId===blockedSecondaryPointerId){lastViewportSecondaryGestureAt=performance.now();if(e.cancelable)e.preventDefault();return;}
     if(!isDragging||e.pointerId!==activePointerId)return;
     // A release outside the browser can occasionally miss pointerup. The buttons
     // state on the next mouse movement is an authoritative fallback.
@@ -6194,11 +6218,11 @@ function setupMouseControls(el){
     }
     lx=e.clientX;ly=e.clientY;updateCameraPosition();
   });
-  window.addEventListener('pointerup',e=>finishDrag(e));
-  window.addEventListener('pointercancel',e=>finishDrag(e));
-  el.addEventListener('lostpointercapture',e=>finishDrag(e));
-  window.addEventListener('blur',()=>finishDrag());
-  document.addEventListener('visibilitychange',()=>{if(document.hidden)finishDrag();});
+  window.addEventListener('pointerup',e=>{if(e.pointerId===blockedSecondaryPointerId){lastViewportSecondaryGestureAt=performance.now();finishBlockedSecondary(e);if(e.cancelable)e.preventDefault();return;}finishDrag(e);});
+  window.addEventListener('pointercancel',e=>{finishBlockedSecondary(e);finishDrag(e);});
+  el.addEventListener('lostpointercapture',e=>{finishBlockedSecondary(e);finishDrag(e);});
+  window.addEventListener('blur',()=>{finishBlockedSecondary();finishDrag();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){finishBlockedSecondary();finishDrag();}});
   el.addEventListener('wheel',e=>{
     e.preventDefault();
     const previousZoom=mapTileZoom;
