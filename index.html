@@ -60,18 +60,6 @@
   --ops-h:     68px;
 }
 
-/* Match the device theme before JavaScript runs, preventing a dark-theme flash on light devices. */
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg:#f0f2f5;--bg2:#e4e7ed;--bg3:#d8dce5;--border:#c4c8d0;--border2:#b0b5c0;
-    --text:#1a1d24;--bright:#0a0c10;--mid:#3a4050;--dim:#6a7080;
-    --row-even:#e5e9ef;--row-even-hover:#d7dde6;--row-odd-hover:#e9edf3;--row-selected:#d8edf7;
-    --row-warning:#fff1dc;--row-alert:#ffe5e5;--row-alert-pulse:#ffd2d2;
-    --emg-bg:#fff1f1;--emg-border:#d99a9a;--emg-accent:#aa1525;--emg-emphasis:#9f1717;
-    --advisory-bg:#fff8dc;--advisory-border:#b7962f;--advisory-text:#5b4700;
-  }
-}
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -112,27 +100,9 @@ html, body {
 .strip-unit { min-width:0;height:30px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;background:var(--bg3);display:flex;align-items:center;justify-content:center; }
 .strip-sep { display:none; }
 .strip-sep.site-divider { display:block;width:1px;height:26px;margin:0 5px;background:var(--border2);flex:none; }
-#app-loading-screen { --loading-ink:var(--bright);position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:var(--bg);color:var(--loading-ink);opacity:1;visibility:visible;transition:opacity .16s steps(3,end),visibility .16s; }
-#app-loading-screen.is-hidden { opacity:0;visibility:hidden;pointer-events:none; }
-.app-loading-lockup { display:flex;flex-direction:column;align-items:center;gap:13px;color:var(--loading-ink); }
-.app-loading-logo-stage { position:relative;width:108px;height:82px;display:grid;place-items:center;animation:app-loading-stage .18s steps(2,end) both; }
-.app-loading-logo-stage::before,.app-loading-logo-stage::after { content:'';position:absolute;width:16px;height:16px;border-color:var(--loading-ink);opacity:.55;animation:app-loading-corners .3s .08s steps(3,end) both; }
-.app-loading-logo-stage::before { inset:0 auto auto 0;border-style:solid none none solid;border-width:1px; }
-.app-loading-logo-stage::after { inset:auto 0 0 auto;border-style:none solid solid none;border-width:1px; }
-.app-loading-logo-picture { display:block;width:82px;height:58px; }
-.app-loading-logo { position:relative;z-index:1;width:82px;height:58px;display:block;object-fit:contain;animation:app-loading-logo .34s .04s steps(4,end) both; }
-.app-loading-title { display:flex;align-items:center;justify-content:center;gap:0;font:700 20px var(--mono);letter-spacing:4px;line-height:1;white-space:pre; }
-.app-loading-title span { display:inline-block;opacity:0;animation:app-loading-key .18s steps(2,end) forwards;animation-delay:calc(.18s + var(--i) * 34ms); }
-.app-loading-progress { position:relative;width:128px;height:2px;margin-top:3px;overflow:hidden;background:color-mix(in srgb,var(--loading-ink) 18%,transparent); }
-.app-loading-progress::after { content:'';position:absolute;inset:0;width:34%;background:var(--loading-ink);animation:app-loading-scan .46s steps(6,end) infinite; }
-@keyframes app-loading-stage { from { opacity:0;transform:translateY(-3px); } to { opacity:1;transform:none; } }
-@keyframes app-loading-logo { 0% { opacity:0;transform:translateY(-7px) scale(.97); } 70% { opacity:1;transform:translateY(2px) scale(1.01,.96); } 100% { opacity:1;transform:none; } }
-@keyframes app-loading-corners { from { opacity:0;transform:scale(.7); } to { opacity:.55;transform:none; } }
-@keyframes app-loading-key { 0% { opacity:0;transform:translateY(-5px) scaleY(1.08); } 55% { opacity:1;transform:translateY(2px) scaleY(.9); } 100% { opacity:1;transform:none; } }
-@keyframes app-loading-scan { from { transform:translateX(-105%); } to { transform:translateX(400%); } }
-@media (prefers-reduced-motion:reduce) {
-  #app-loading-screen,.app-loading-logo-stage,.app-loading-logo,.app-loading-title span,.app-loading-logo-stage::before,.app-loading-logo-stage::after,.app-loading-progress::after { animation:none;transition:none;opacity:1;transform:none; }
-}
+.app-brand { display:flex;align-items:center;gap:6px;height:30px;min-width:0;color:var(--bright);font:700 11px var(--mono);letter-spacing:1px;white-space:nowrap; }
+.app-brand img { width:24px;height:24px;display:block;object-fit:contain; }
+.app-brand img[hidden] { display:none; }
 #metar-pill {
   display: flex;
   align-items: center;
@@ -295,7 +265,7 @@ html, body {
   position: relative;
   overflow: hidden;
 }
-#viz3d canvas { display:block;outline:none;width:100%!important;height:100%!important;touch-action:none;user-select:none; }
+#viz3d canvas { display: block; outline: none; width: 100% !important; height: 100% !important; }
 .leg-item { display: flex; align-items: center; gap: 5px; }
 .leg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .settings-legend { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 14px;padding:9px 10px;border:1px solid var(--border);border-radius:4px;background:var(--bg);font:10px var(--mono);color:var(--mid); }
@@ -1467,28 +1437,20 @@ html, body {
   #metar-strip { gap:3px;padding:0 4px; }
   .strip-unit { padding-left:5px;padding-right:5px; }
   #metar-age { display:none; }
+  .app-brand-name { display:none; }
 }
 </style>
 </head>
 <body>
 
-<div id="app-loading-screen" role="status" aria-label="R4DIO DASH is loading">
-  <div class="app-loading-lockup">
-    <div class="app-loading-logo-stage" aria-hidden="true">
-      <picture class="app-loading-logo-picture">
-        <source id="app-loading-logo-source" media="(prefers-color-scheme: light)" srcset="icon_lightmode.svg">
-        <img class="app-loading-logo" id="app-loading-logo" src="icon_darkmode.svg" alt="">
-      </picture>
-    </div>
-    <div class="app-loading-title" aria-label="R4DIO DASH"><span aria-hidden="true" style="--i:0">R</span><span aria-hidden="true" style="--i:1">4</span><span aria-hidden="true" style="--i:2">D</span><span aria-hidden="true" style="--i:3">I</span><span aria-hidden="true" style="--i:4">O</span><span aria-hidden="true" style="--i:5"> </span><span aria-hidden="true" style="--i:6">D</span><span aria-hidden="true" style="--i:7">A</span><span aria-hidden="true" style="--i:8">S</span><span aria-hidden="true" style="--i:9">H</span></div>
-    <div class="app-loading-progress" aria-hidden="true"></div>
-  </div>
-</div>
-
 <!-- ══════════════════════════════════════════════ -->
 <!--  METAR STRIP                                   -->
 <!-- ══════════════════════════════════════════════ -->
 <div id="metar-strip">
+  <div class="app-brand" title="R4DIO DASH">
+    <img id="app-ui-icon" src="icon_darkmode.svg" alt="" onload="this.hidden=false" onerror="this.hidden=true">
+    <span class="app-brand-name">R4DIO DASH</span>
+  </div>
   <button class="site-button strip-unit" id="site-selector" onclick="openLocation()" title="Choose monitored waypoint and airspace">
     <span id="site-code">LKKO</span>
   </button>
@@ -1731,9 +1693,9 @@ html, body {
     <div class="detach-wrap">
       <button class="ops-btn detach-btn" id="detach-btn" onclick="toggleDetachMenu(event)" title="Open a view in another window" aria-label="Open a view in another window">&#x29C9;</button>
       <div class="detach-menu" id="detach-menu" onclick="event.stopPropagation()">
-        <button type="button" onpointerdown="armDetachedPanel('tracker',event)" onclick="openDetachedPanel('tracker',event)"><span>TRACKER VIEW</span><span>&#x2197;</span></button>
-        <button type="button" onpointerdown="armDetachedPanel('map',event)" onclick="openDetachedPanel('map',event)"><span>MAP / 3D VIEW</span><span>&#x2197;</span></button>
-        <button type="button" onpointerdown="armDetachedPanel('list',event)" onclick="openDetachedPanel('list',event)"><span>AIRCRAFT LIST</span><span>&#x2197;</span></button>
+        <button onclick="openDetachedPanel('tracker')"><span>TRACKER VIEW</span><span>&#x2197;</span></button>
+        <button onclick="openDetachedPanel('map')"><span>MAP / 3D VIEW</span><span>&#x2197;</span></button>
+        <button onclick="openDetachedPanel('list')"><span>AIRCRAFT LIST</span><span>&#x2197;</span></button>
       </div>
     </div>
   </div>
@@ -2026,8 +1988,6 @@ html, body {
 <script>
 'use strict';
 
-const APP_LOADING_STARTED_AT=performance.now();
-
 // Clear all persisted R4DIO DASH operational state at each local midnight.
 const RADIO_WATCH_DAY_KEY='radioWatchStorageDay';
 const RADIO_WATCH_STORAGE_PREFIXES=['radioWatch','rw_'];
@@ -2093,8 +2053,6 @@ Object.assign(UI_TEXT.cz,{radioStartSilent:'Tich\u00fd RX',radioStopSilent:'Zast
 Object.assign(UI_TEXT.en,{radioMuteRequested:'MUTE REQUESTED',radioMuteConfirmed:'SYSTEM MUTED / RX',radioMuteReleasing:'RESTORING SYSTEM AUDIO',radioMuteRestored:'SYSTEM AUDIO RESTORED',radioMuteFailed:'MUTE FAILED',radioCooldown:'MUTED / COOLDOWN'});
 Object.assign(UI_TEXT.cz,{radioMuteRequested:'PO\u017dADAVEK NA ZTLUMEN\u00cd',radioMuteConfirmed:'SYST\u00c9M ZTLUMEN / RX',radioMuteReleasing:'OBNOVUJI ZVUK SYST\u00c9MU',radioMuteRestored:'ZVUK SYST\u00c9MU OBNOVEN',radioMuteFailed:'ZTLUMEN\u00cd SELHALO',radioCooldown:'ZTLUMENO / OCHRANN\u00c1 DOBA'});
 Object.assign(UI_TEXT.en,{trackerStatsTitle:'Tracker details',trackerLocalCount:'Local targets',trackerLastUpdate:'Last update',trackerNextUpdate:'Next refresh',trackerFeedHealthy:'Connected'});
-Object.assign(UI_TEXT.en,{trafficRelayMissing:'Live traffic relay is not configured for this website'});
-Object.assign(UI_TEXT.cz,{trafficRelayMissing:'Datov\u00fd server \u017eiv\u00e9ho provozu nen\u00ed pro tento web nastaven'});
 Object.assign(UI_TEXT.cz,{trackerStatsTitle:'Podrobnosti trackeru',trackerLocalCount:'M\u00edstn\u00ed c\u00edle',trackerLastUpdate:'Posledn\u00ed aktualizace',trackerNextUpdate:'Dal\u0161\u00ed aktualizace',trackerFeedHealthy:'P\u0159ipojeno'});
 const storedUiLanguage=localStorage.getItem('radioWatchLanguage');
 let uiLanguage=storedUiLanguage==='en'?'en':'cz';
@@ -2106,7 +2064,7 @@ function applyUiLanguage(rerender=true){
   document.querySelectorAll('[data-i18n-placeholder]').forEach(element=>{element.placeholder=t(element.dataset.i18nPlaceholder);});
   document.getElementById('lang-en')?.classList.toggle('active',uiLanguage==='en');
   document.getElementById('lang-cz')?.classList.toggle('active',uiLanguage==='cz');
-  const themeButton=document.getElementById('theme-btn');if(themeButton){themeButton.textContent=isDark?t('dark'):t('light');themeButton.classList.toggle('active',isDark);}
+  const themeButton=document.getElementById('theme-btn');if(themeButton)themeButton.textContent=isDark?t('dark'):t('light');
   renderSdrSettings();
   if(!rerender)return;
   syncInactiveAirspaceControls();updateLiveTrafficStatus();render();renderTrackedFlightsDrawer();renderNearbyFrequencyContacts();
@@ -2117,8 +2075,7 @@ function setUiLanguage(language){
 function syncAppIdentity(){
   const iconPath=isDark?'icon_darkmode.svg':'icon_lightmode.svg';
   const favicon=document.getElementById('app-favicon');if(favicon)favicon.href=iconPath;
-  const loadingSource=document.getElementById('app-loading-logo-source');if(loadingSource)loadingSource.srcset=iconPath;
-  const loadingLogo=document.getElementById('app-loading-logo');if(loadingLogo)loadingLogo.src=iconPath;
+  const uiIcon=document.getElementById('app-ui-icon');if(uiIcon){uiIcon.hidden=false;uiIcon.src=iconPath;}
   const themeColor=document.getElementById('app-theme-color');if(themeColor)themeColor.content=isDark?'#0b0c0f':'#f0f2f5';
 }
 
@@ -2961,9 +2918,6 @@ let metarStationChoicesOpen=false;
 const METAR_STATION_CODES=['LKBC','LKCR','LKCS','LKCV','LKKB','LKKU','LKKV','LKLN','LKMH','LKMT','LKNA','LKPD','LKPJ','LKPR','LKTB','LKTH','LKVO'];
 const RADIO_WATCH_QUERY=new URLSearchParams(location.search);
 const RADIO_WATCH_API_BASE=(RADIO_WATCH_QUERY.get('apiBase')||document.querySelector('meta[name="r4dio-dash-api-base"]')?.content||document.querySelector('meta[name="radio-watch-api-base"]')?.content||'').trim();
-const RADIO_WATCH_TRAFFIC_ENDPOINT_OVERRIDE=(RADIO_WATCH_QUERY.get('trafficEndpoint')||'').trim();
-const RADIO_WATCH_TRAFFIC_RELAY_CONFIGURED=Boolean(RADIO_WATCH_API_BASE||RADIO_WATCH_TRAFFIC_ENDPOINT_OVERRIDE);
-const RADIO_WATCH_UNCONFIGURED_GITHUB_PAGES=/\.github\.io$/i.test(location.hostname)&&!RADIO_WATCH_TRAFFIC_RELAY_CONFIGURED;
 function resolveRadioWatchEndpoint(parameter,path){
   const explicit=RADIO_WATCH_QUERY.get(parameter);
   if(explicit)return explicit;
@@ -4743,8 +4697,7 @@ function closePresets(){ document.getElementById('presets-overlay').classList.re
 let currentTopView = 'both'; // split, map, list, tracker split, or tracker
 
 // ─── THEME ────────────────────────────────────────────────────────────────
-const deviceThemeQuery=window.matchMedia?.('(prefers-color-scheme: dark)');
-let isDark=deviceThemeQuery?deviceThemeQuery.matches:true;
+let isDark = true;
 function toggleTheme() {
   isDark = !isDark;
   document.getElementById('theme-btn').textContent = isDark ? t('dark') : t('light');
@@ -4908,10 +4861,7 @@ document.addEventListener('keydown', e => {
 let scene, camera, perspectiveCamera, topCamera, renderer, zoneGroup, mapGroup, markerGroup, trafficGroup;
 let currentView = 'top';
 let trackerMapMode=false,trackerRestoreState=null;
-let isDragging=false,dragMode=null,lastViewportSecondaryGestureAt=-Infinity;
-window.addEventListener('beforeunload',event=>{
-  if(performance.now()-lastViewportSecondaryGestureAt<1600){event.preventDefault();event.returnValue='';}
-});
+let isDragging = false, dragMode = null;
 let camAngleH = Math.PI/4, camAngleV = 0.6, camDist = 38000;
 let camTarget = { x: 0, y: 0, z: 1500 };
 const V_SCALE = 2;
@@ -5016,15 +4966,7 @@ function closeDetachMenu(){
   const menu=document.getElementById('detach-menu'),wrap=menu?.closest('.detach-wrap');menu?.classList.remove('show');menu?.closest('.view-popout-cluster')?.classList.remove('detach-open');
   if(wrap?.contains(document.activeElement))document.activeElement.blur();
 }
-let detachedPanelActivation=null;
-function armDetachedPanel(kind,event){
-  detachedPanelActivation=event.button===0?{kind,pointerId:event.pointerId,x:event.clientX,y:event.clientY,at:performance.now()}:null;
-}
-function openDetachedPanel(kind,event){
-  const keyboardActivation=event?.detail===0;
-  const armed=detachedPanelActivation&&detachedPanelActivation.kind===kind&&performance.now()-detachedPanelActivation.at<800&&Math.hypot(event.clientX-detachedPanelActivation.x,event.clientY-detachedPanelActivation.y)<6;
-  detachedPanelActivation=null;
-  if(!keyboardActivation&&!armed)return;
+function openDetachedPanel(kind){
   closeDetachMenu();
   const url=new URL(location.href);url.searchParams.set('popout',kind);
   const width=Math.max(720,Math.floor(screen.availWidth*.86)),height=Math.max(560,Math.floor(screen.availHeight*.86));
@@ -5376,7 +5318,6 @@ function syncTrafficInfoForLayout(){
   if(track&&trafficInfoAllowedForLayout())showTrafficInfo(track);else closeTrafficInfo();
 }
 async function fetchLiveTraffic(){
-  if(RADIO_WATCH_UNCONFIGURED_GITHUB_PAGES)throw new Error(t('trafficRelayMissing'));
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
   liveTrafficAbortController=controller;
   try{
@@ -5384,7 +5325,6 @@ async function fetchLiveTraffic(){
     const response=await fetch(`${LIVE_TRAFFIC_URL}${separator}_=${Date.now()}`,{mode:'cors',cache:'no-store',signal:controller.signal});
     const payload=await response.json().catch(()=>null);
     if(!response.ok||!payload){
-      if(response.status===404&&!RADIO_WATCH_TRAFFIC_RELAY_CONFIGURED)throw new Error(t('trafficRelayMissing'));
       const detail=Object.entries(payload?.feeds||{}).map(([name,state])=>`${name}: ${state.error||'unavailable'}`).join(' · ');
       throw new Error(payload?.error||detail||`traffic API HTTP ${response.status}`);
     }
@@ -6168,42 +6108,11 @@ function setTrackerMapMode(enabled){
 }
 
 function setupMouseControls(el){
-  let lx=0,ly=0,activePointerId=null,blockedSecondaryPointerId=null;
-  el.title='Viewport: left drag rotates in ISO; Shift + left drag or middle drag pans; wheel zooms';
-  const finishBlockedSecondary=event=>{
-    if(event?.pointerId!=null&&blockedSecondaryPointerId!=null&&event.pointerId!==blockedSecondaryPointerId)return;
-    const pointerId=blockedSecondaryPointerId;blockedSecondaryPointerId=null;
-    if(pointerId!=null&&el.hasPointerCapture?.(pointerId)){try{el.releasePointerCapture(pointerId);}catch{}}
-  };
-  const finishDrag=(event,rebuild=true)=>{
-    if(event?.pointerId!=null&&activePointerId!=null&&event.pointerId!==activePointerId)return;
-    const pointerId=activePointerId,wasDragging=isDragging,wasPan=dragMode==='pan';
-    activePointerId=null;isDragging=false;dragMode=null;
-    if(pointerId!=null&&el.hasPointerCapture?.(pointerId)){
-      try{el.releasePointerCapture(pointerId);}catch{}
-    }
-    if(rebuild&&wasDragging&&wasPan&&mapLayerOn)rebuildMapLayer();
-  };
-  el.addEventListener('pointerdown',e=>{
-    if(e.button===2){
-      lastViewportSecondaryGestureAt=performance.now();blockedSecondaryPointerId=e.pointerId;
-      try{el.setPointerCapture(e.pointerId);}catch{}
-      e.preventDefault();e.stopPropagation();return;
-    }
-    if(e.button!==0&&e.button!==1)return;
-    if(isDragging)finishDrag(null,false);
-    activePointerId=e.pointerId;isDragging=true;dragMode=isPlanView()||e.button===1||e.shiftKey?'pan':'rotate';lx=e.clientX;ly=e.clientY;
-    try{el.setPointerCapture(e.pointerId);}catch{}
-    e.preventDefault();
-  });
-  el.addEventListener('contextmenu',e=>{lastViewportSecondaryGestureAt=performance.now();e.preventDefault();e.stopPropagation();});
-  el.addEventListener('auxclick',e=>{if(e.button===1||e.button===2)e.preventDefault();});
-  window.addEventListener('pointermove',e=>{
-    if(e.pointerId===blockedSecondaryPointerId){lastViewportSecondaryGestureAt=performance.now();if(e.cancelable)e.preventDefault();return;}
-    if(!isDragging||e.pointerId!==activePointerId)return;
-    // A release outside the browser can occasionally miss pointerup. The buttons
-    // state on the next mouse movement is an authoritative fallback.
-    if(e.pointerType==='mouse'&&e.buttons===0){finishDrag(e);return;}
+  let lx=0,ly=0;
+  el.addEventListener('mousedown',e=>{isDragging=true;dragMode=isPlanView()||e.button===2?'pan':'rotate';lx=e.clientX;ly=e.clientY;e.preventDefault();});
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+  window.addEventListener('mousemove',e=>{
+    if(!isDragging)return;
     const dx=e.clientX-lx,dy=e.clientY-ly;
     if(currentView==='iso'&&dragMode==='rotate'){
       camAngleH=(camAngleH-dx*.01)%(Math.PI*2);if(camAngleH<0)camAngleH+=Math.PI*2;
@@ -6218,11 +6127,7 @@ function setupMouseControls(el){
     }
     lx=e.clientX;ly=e.clientY;updateCameraPosition();
   });
-  window.addEventListener('pointerup',e=>{if(e.pointerId===blockedSecondaryPointerId){lastViewportSecondaryGestureAt=performance.now();finishBlockedSecondary(e);if(e.cancelable)e.preventDefault();return;}finishDrag(e);});
-  window.addEventListener('pointercancel',e=>{finishBlockedSecondary(e);finishDrag(e);});
-  el.addEventListener('lostpointercapture',e=>{finishBlockedSecondary(e);finishDrag(e);});
-  window.addEventListener('blur',()=>{finishBlockedSecondary();finishDrag();});
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){finishBlockedSecondary();finishDrag();}});
+  window.addEventListener('mouseup',()=>{const rebuildMap=isDragging&&dragMode==='pan';isDragging=false;if(rebuildMap&&mapLayerOn)rebuildMapLayer();});
   el.addEventListener('wheel',e=>{
     e.preventDefault();
     const previousZoom=mapTileZoom;
@@ -6348,13 +6253,6 @@ document.addEventListener('click', e => {
     closeFtm();
   }
 });
-function dismissAppLoadingScreen(){
-  const screen=document.getElementById('app-loading-screen');if(!screen)return;
-  const delay=Math.max(0,760-(performance.now()-APP_LOADING_STARTED_AT));
-  setTimeout(()=>{screen.classList.add('is-hidden');setTimeout(()=>screen.remove(),260);},delay);
-}
-if(document.readyState==='complete')dismissAppLoadingScreen();
-else window.addEventListener('load',dismissAppLoadingScreen,{once:true});
 syncAppIdentity();
 applyUiLanguage();
 </script>
