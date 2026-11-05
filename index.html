@@ -121,7 +121,7 @@ html, body {
 .strip-sep.site-divider { display:block;width:1px;height:26px;margin:0 5px;background:var(--border2);flex:none; }
 .header-clock-group,.header-status-group { display:flex;align-items:center;gap:6px;min-width:0; }
 .header-status-group { margin-left:18px; }
-.header-center-logo { position:absolute;left:50%;top:50%;width:48px;height:30px;display:block;object-fit:contain;overflow:visible;transform:translate(-50%,-50%);pointer-events:none; }
+.header-center-logo { position:absolute;left:50%;top:50%;width:32px;height:18px;display:block;object-fit:contain;overflow:visible;transform:translate(-50%,-50%);pointer-events:none; }
 .header-center-logo[hidden] { display:none; }
 .header-data-divider { width:1px;height:24px;margin:0 11px;background:var(--border2);flex:none; }
 #metar-pill {
@@ -148,7 +148,9 @@ html, body {
 .top-traffic-stats.warning { --tracker-state-color:var(--tracker-cyan);display:flex;color:var(--bright);border-color:color-mix(in srgb,var(--tracker-cyan) 55%,transparent); }
 .top-traffic-stats.error { --tracker-state-color:var(--red);display:flex;color:var(--red); }
 .top-traffic-content { position:relative;z-index:1;display:flex;align-items:center;gap:5px; }
-.top-traffic-partial { position:relative;z-index:1;margin-left:2px;padding-left:5px;border-left:1px solid color-mix(in srgb,var(--tracker-cyan) 55%,transparent);color:var(--tracker-cyan);font-size:7px;letter-spacing:.5px; }
+.top-traffic-partial { position:relative;z-index:1;width:9px;height:9px;margin-left:1px;flex:none;border:1px solid var(--tracker-cyan);border-radius:50%;background:linear-gradient(90deg,var(--tracker-cyan) 50%,transparent 50%);box-shadow:0 0 5px color-mix(in srgb,var(--tracker-cyan) 35%,transparent); }
+.top-traffic-partial.retry { animation:tracker-partial-retry .9s steps(2,end) infinite; }
+.tracker-key-partial { margin:1px 9px 0 0; }
 .top-local-dot { width:7px;height:7px;border-radius:50%;background:var(--tracker-cyan);box-shadow:0 0 6px color-mix(in srgb,var(--tracker-cyan) 75%,transparent);flex:none; }
 .top-traffic-stats.zero-local { padding-left:10px;padding-right:10px; }
 .tracker-stats-detail { display:none;position:fixed;top:calc(var(--strip-h) + 4px);z-index:520;width:240px;padding:9px;border:1px solid color-mix(in srgb,var(--tracker-cyan) 55%,transparent);border-radius:4px;background:var(--bg2);box-shadow:0 8px 24px #0008;font:10px var(--mono); }
@@ -163,6 +165,7 @@ html, body {
 .tracker-refresh-cycle { position:relative;height:11px;overflow:hidden;border:1px solid color-mix(in srgb,var(--tracker-state-color,var(--tracker-cyan)) 55%,var(--border2));border-radius:2px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),var(--border2) calc(10% - 1px),var(--border2) 10%); }
 .tracker-refresh-fill { position:absolute;inset:0 auto 0 0;width:0;background:color-mix(in srgb,var(--tracker-state-color,var(--tracker-cyan)) 36%,transparent);box-shadow:0 0 8px color-mix(in srgb,var(--tracker-state-color,var(--tracker-cyan)) 45%,transparent);transition:width .92s linear; }
 @keyframes tracker-update-flash { 0%{opacity:0;transform:translateX(-48%)} 24%{opacity:1} 100%{opacity:0;transform:translateX(48%)} }
+@keyframes tracker-partial-retry { 50% { opacity:.28;box-shadow:none; } }
 #clock-utc, #clock-lt { font-size: 15px; color: var(--bright); font-family: var(--mono); }
 #clock-label-lt, #clock-label-utc { font-size: 9px; color: var(--dim); text-transform: uppercase; }
 .clock-block { display:flex;flex-direction:column;align-items:flex-start;justify-content:center;height:30px;padding:0 4px; }
@@ -1472,7 +1475,7 @@ html, body {
   #metar-strip { gap:3px;padding:0 4px; }
   .strip-unit { padding-left:5px;padding-right:5px; }
   #metar-age { display:none; }
-  .header-center-logo { width:38px;height:25px;opacity:.72; }
+  .header-center-logo { width:28px;height:16px;opacity:.82; }
   .header-status-group { margin-left:7px; }
 }
 </style>
@@ -1491,7 +1494,6 @@ html, body {
 <!--  METAR STRIP                                   -->
 <!-- ══════════════════════════════════════════════ -->
 <div id="metar-strip">
-  <div class="sdr-rx-indicator" id="sdr-rx-indicator" title="RTL-SDR receive status" role="status" aria-live="polite"><span>SDR</span><strong id="sdr-rx-state">RX</strong></div>
   <div class="header-clock-group">
     <div class="clock-block">
       <span class="clock-label-lt strip-label">LT</span>
@@ -1514,6 +1516,8 @@ html, body {
   </div>
   <img class="header-center-logo" id="app-ui-icon" src="icon_darkmode.svg" alt="" onload="this.hidden=false" onerror="this.hidden=true">
   <div class="top-strip-end">
+    <div class="sdr-rx-indicator" id="sdr-rx-indicator" title="RTL-SDR receive status" role="status" aria-live="polite"><span>SDR</span><strong id="sdr-rx-state">RX</strong></div>
+    <div class="header-data-divider" aria-hidden="true"></div>
     <button class="site-button strip-unit" id="site-selector" onclick="openLocation()" title="Choose monitored waypoint and airspace">
       <span id="site-code">LKKO</span>
     </button>
@@ -1962,7 +1966,7 @@ html, body {
         <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:#00e676"></span><span data-i18n="trackerKeyInside">Green: inside monitored airspace</span></div>
         <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:#2196f3"></span><span data-i18n="trackerKeyOutside">Blue: below, above, near or followed</span></div>
         <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:#7f8998"></span><span data-i18n="trackerKeyGround">Grey: ground tracker</span></div>
-        <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:var(--tracker-cyan)"></span><span data-i18n="trackerKeyWarning">Blue PARTIAL / RETRY label: one or more feeds are delayed or unavailable</span></div>
+        <div class="tracker-key-row"><span class="top-traffic-partial tracker-key-partial" aria-hidden="true"></span><span data-i18n="trackerKeyWarning">Half-filled blue indicator: one or more feeds are delayed or unavailable</span></div>
       </div>
       <div class="settings-label" style="margin-top:12px;" data-i18n="mapLegend">Map legend</div>
       <div class="settings-legend">
@@ -2101,10 +2105,10 @@ Object.assign(UI_TEXT.cz,{radioStartSilent:'Tich\u00fd RX',radioStopSilent:'Zast
 Object.assign(UI_TEXT.en,{radioMuteRequested:'MUTE REQUESTED',radioMuteConfirmed:'SYSTEM MUTED / RX',radioMuteReleasing:'RESTORING SYSTEM AUDIO',radioMuteRestored:'SYSTEM AUDIO RESTORED',radioMuteFailed:'MUTE FAILED',radioCooldown:'MUTED / COOLDOWN'});
 Object.assign(UI_TEXT.cz,{radioMuteRequested:'PO\u017dADAVEK NA ZTLUMEN\u00cd',radioMuteConfirmed:'SYST\u00c9M ZTLUMEN / RX',radioMuteReleasing:'OBNOVUJI ZVUK SYST\u00c9MU',radioMuteRestored:'ZVUK SYST\u00c9MU OBNOVEN',radioMuteFailed:'ZTLUMEN\u00cd SELHALO',radioCooldown:'ZTLUMENO / OCHRANN\u00c1 DOBA'});
 Object.assign(UI_TEXT.en,{trackerStatsTitle:'Tracker details',trackerLocalCount:'Local targets',trackerFeedHealthy:'Connected'});
-Object.assign(UI_TEXT.en,{trackerCycle:'Measured update cadence',trackerLastUpdateAgo:'Last update',trackerAverage:'average',trackerLost:'TRACK LOST',trackerSignalLost:'No new position reports',trackerOutOfRange:'Left the monitored range',acknowledge:'ACK'});
-Object.assign(UI_TEXT.cz,{trackerCycle:'Naměřený cyklus aktualizace',trackerLastUpdateAgo:'Poslední aktualizace před',trackerAverage:'průměr',trackerLost:'ZTRÁTA CÍLE',trackerSignalLost:'Bez nových hlášení polohy',trackerOutOfRange:'Opustil sledovaný dosah',acknowledge:'POTVRDIT'});
-Object.assign(UI_TEXT.en,{trackerKeyProgress:'A subtle blue flash marks each completed update',trackerKeyWarning:'Blue PARTIAL / RETRY label: one or more feeds are delayed or unavailable'});
-Object.assign(UI_TEXT.cz,{trackerKeyProgress:'Každou dokončenou aktualizaci označí jemný modrý záblesk',trackerKeyWarning:'Modrý štítek ČÁSTEČNĚ / OPAKOVÁNÍ: jeden či více zdrojů má zpoždění nebo není dostupný'});
+Object.assign(UI_TEXT.en,{trackerCycle:'Complete-update cadence',trackerLastUpdateAgo:'Last complete update',trackerAverage:'complete average',trackerLost:'TRACK LOST',trackerSignalLost:'No new position reports',trackerOutOfRange:'Left the monitored range',acknowledge:'ACK'});
+Object.assign(UI_TEXT.cz,{trackerCycle:'Cyklus úplných aktualizací',trackerLastUpdateAgo:'Poslední úplná aktualizace před',trackerAverage:'průměr úplných',trackerLost:'ZTRÁTA CÍLE',trackerSignalLost:'Bez nových hlášení polohy',trackerOutOfRange:'Opustil sledovaný dosah',acknowledge:'POTVRDIT'});
+Object.assign(UI_TEXT.en,{trackerKeyProgress:'A subtle blue flash marks each received update',trackerKeyWarning:'Half-filled blue indicator: one or more feeds are delayed or unavailable'});
+Object.assign(UI_TEXT.cz,{trackerKeyProgress:'Každou přijatou aktualizaci označí jemný modrý záblesk',trackerKeyWarning:'Napůl vyplněný modrý indikátor: jeden či více zdrojů má zpoždění nebo není dostupný'});
 Object.assign(UI_TEXT.en,{trackerGroundPath:'Ground trail + position estimate',trackerGroundPathHelp:'For the selected aircraft, draws its observed trail on the base plane and projects its present heading ahead.',trackerAdvisory:'Czech territory only · below FL100 · updates every 10 seconds. <a href="https://live.glidernet.org/" target="_blank" rel="noopener" style="color:var(--accent2)">OGN Live</a> is read directly by the browser; <a href="https://adsb.lol/" target="_blank" rel="noopener" style="color:var(--accent2)">adsb.lol</a> ADS-B is added when a relay is available. Advisory display only—not suitable for separation or collision avoidance.'});
 Object.assign(UI_TEXT.cz,{trackerGroundPath:'Pozemní stopa + odhad polohy',trackerGroundPathHelp:'Pro vybrané letadlo vykreslí pozorovanou stopu na základní rovině a promítne jeho současný směr dopředu.',trackerAdvisory:'Pouze území ČR · pod FL100 · aktualizace každých 10 sekund. <a href="https://live.glidernet.org/" target="_blank" rel="noopener" style="color:var(--accent2)">OGN Live</a> načítá přímo prohlížeč; ADS-B z <a href="https://adsb.lol/" target="_blank" rel="noopener" style="color:var(--accent2)">adsb.lol</a> se doplní, když je dostupný relay. Pouze informativní zobrazení—není určeno k rozstupům ani vyhýbání srážkám.'});
 Object.assign(UI_TEXT.cz,{trackerStatsTitle:'Podrobnosti trackeru',trackerLocalCount:'M\u00edstn\u00ed c\u00edle',trackerFeedHealthy:'P\u0159ipojeno'});
@@ -4948,7 +4952,7 @@ const LIVE_TRAFFIC_STATE_COLORS={inside:0x00e676,outside:0x2f8fff};
 let liveTrafficOn=localStorage.getItem('radioWatchLiveTraffic')==='on';
 let trackerGroundPathOn=localStorage.getItem('radioWatchTrackerGroundPath')!=='off';
 let liveTrafficTimer=0,liveTrafficBusy=false,liveTrafficLastSuccess=0,liveTrafficLastAttempt=0,liveTrafficPollStartedAt=0,liveTrafficError='',liveTrafficFailure=false,liveTrafficAbortController=null;
-let liveTrafficAverageMs=LIVE_TRAFFIC_POLL_MS,liveTrafficAverageSamples=0;
+let liveTrafficLastCompleteSuccess=0,liveTrafficAverageMs=LIVE_TRAFFIC_POLL_MS,liveTrafficAverageSamples=0;
 let liveTrafficCounts={ADSB:0,OGN:0,visible:0};
 liveTrafficTracks=new Map();
 const liveTrafficVisuals=new Map();
@@ -5619,8 +5623,8 @@ function flashTrafficStatusUpdate(){
 function renderTrackerStatsDetail(){
   const detail=document.getElementById('tracker-stats-detail');
   if(!detail)return;
-  const elapsed=liveTrafficLastSuccess?Math.max(0,Date.now()-liveTrafficLastSuccess):0,averageMs=Math.max(3000,Math.min(60000,liveTrafficAverageMs)),cycleProgress=liveTrafficLastSuccess?Math.min(100,elapsed/averageMs*100):0,lastUpdateSeconds=liveTrafficLastSuccess?Math.floor(elapsed/1000):0,averageSeconds=(averageMs/1000).toFixed(1);
-  const lastUpdateText=liveTrafficLastSuccess?`${t('trackerLastUpdateAgo')} ${lastUpdateSeconds} s${uiLanguage==='en'?' ago':''}`:`${t('trackerLastUpdateAgo')} —`;
+  const elapsed=liveTrafficLastCompleteSuccess?Math.max(0,Date.now()-liveTrafficLastCompleteSuccess):0,averageMs=Math.max(3000,Math.min(180000,liveTrafficAverageMs)),cycleProgress=liveTrafficLastCompleteSuccess?Math.min(100,elapsed/averageMs*100):0,lastUpdateSeconds=liveTrafficLastCompleteSuccess?Math.floor(elapsed/1000):0,averageSeconds=(averageMs/1000).toFixed(1);
+  const lastUpdateText=liveTrafficLastCompleteSuccess?`${t('trackerLastUpdateAgo')} ${lastUpdateSeconds} s${uiLanguage==='en'?' ago':''}`:`${t('trackerLastUpdateAgo')} —`;
   const state=liveTrafficBusy?t('updating'):liveTrafficFailure?t('retrying'):liveTrafficError?t('partial'):t('trackerFeedHealthy');
   detail.style.setProperty('--tracker-state-color','var(--tracker-cyan)');
   detail.innerHTML=`<div class="tracker-stats-title"><span>${t('trackerStatsTitle')}</span><button class="traffic-close" onclick="closeTrackerStatsDetail()" aria-label="${t('close')}">✕</button></div><div class="tracker-stats-grid"><span>${t('trackerLocalCount')}</span><span>${liveTrafficCounts.visible}</span><span>ADS-B</span><span>${liveTrafficCounts.ADSB}</span><span>OGN / FLARM</span><span>${liveTrafficCounts.OGN}</span><span>${t('feedStatus')}</span><span>${state}</span></div><div class="tracker-refresh-graphic"><div class="tracker-refresh-caption"><span>${lastUpdateText}</span><span>${averageSeconds} s ${t('trackerAverage')}</span></div><div class="tracker-refresh-cycle" role="progressbar" aria-label="${t('trackerCycle')}" aria-valuemin="0" aria-valuemax="${Math.round(averageMs)}" aria-valuenow="${Math.round(Math.min(elapsed,averageMs))}"><div class="tracker-refresh-fill" style="width:${cycleProgress.toFixed(1)}%"></div></div></div>${liveTrafficError?`<div class="tracker-stats-warning">${escapeHtml(liveTrafficError)}</div>`:''}`;
@@ -5651,7 +5655,8 @@ function updateLiveTrafficStatus(){
   if(!liveTrafficOn){status.style.display='none';status.textContent='';status.className='top-traffic-stats strip-unit';closeTrackerStatsDetail();if(settingsStatus)settingsStatus.textContent=t('disabled');renderTrackedFlightsDrawer();return;}
   status.style.display='flex';
   const age=liveTrafficLastSuccess?Math.round((Date.now()-liveTrafficLastSuccess)/1000):null;
-  status.innerHTML=`<span class="top-traffic-content"><span class="top-local-dot"></span>${liveTrafficCounts.visible?`<span>${liveTrafficCounts.visible} LOCAL</span>`:''}</span>${liveTrafficError?`<span class="top-traffic-partial">${liveTrafficFailure?t('retrying'):t('partial')}</span>`:''}`;
+  const partialState=liveTrafficFailure?t('retrying'):t('partial');
+  status.innerHTML=`<span class="top-traffic-content"><span class="top-local-dot"></span>${liveTrafficCounts.visible?`<span>${liveTrafficCounts.visible} LOCAL</span>`:''}</span>${liveTrafficError?`<span class="top-traffic-partial${liveTrafficFailure?' retry':''}" role="img" aria-label="${escapeHtml(partialState)}" title="${escapeHtml(partialState)}"></span>`:''}`;
   status.className=`top-traffic-stats strip-unit ${liveTrafficError?'warning':'live'}${liveTrafficCounts.visible?'':' zero-local'}`;
   updateTrafficRefreshTimer();
   if(document.getElementById('tracker-stats-detail')?.classList.contains('show'))renderTrackerStatsDetail();
@@ -5668,8 +5673,12 @@ async function pollLiveTraffic(){
   if(!liveTrafficOn||document.hidden||liveTrafficBusy)return;
   liveTrafficBusy=true;liveTrafficLastAttempt=Date.now();liveTrafficPollStartedAt=liveTrafficLastAttempt;
   try{
-    const result=await fetchLiveTraffic(),reports=result.reports,now=Date.now(),previousSuccess=liveTrafficLastSuccess;liveTrafficError=result.warning;
-    if(previousSuccess){const interval=now-previousSuccess;if(interval>=3000&&interval<=60000){liveTrafficAverageSamples=Math.min(12,liveTrafficAverageSamples+1);liveTrafficAverageMs+=(interval-liveTrafficAverageMs)/liveTrafficAverageSamples;}}
+    const result=await fetchLiveTraffic(),reports=result.reports,now=Date.now();liveTrafficError=result.warning;
+    if(!result.warning){
+      const previousCompleteSuccess=liveTrafficLastCompleteSuccess;
+      if(previousCompleteSuccess){const interval=now-previousCompleteSuccess;if(interval>=3000&&interval<=300000){liveTrafficAverageSamples=Math.min(12,liveTrafficAverageSamples+1);liveTrafficAverageMs+=(interval-liveTrafficAverageMs)/liveTrafficAverageSamples;}}
+      liveTrafficLastCompleteSuccess=now;
+    }
     liveTrafficLastSuccess=now;
     liveTrafficFailure=false;
     reports.forEach(report=>{
@@ -5691,7 +5700,7 @@ function startLiveTraffic(){
 function toggleLiveTraffic(){
   if(trackerMapMode)return;
   liveTrafficOn=!liveTrafficOn;localStorage.setItem('radioWatchLiveTraffic',liveTrafficOn?'on':'off');closeTrafficInfo();
-  if(!liveTrafficOn){clearInterval(liveTrafficTimer);liveTrafficTimer=0;liveTrafficAbortController?.abort();liveTrafficTracks.clear();resetTrackedAreaNotificationBaseline();selectedTrackedFlightId=null;expandedTrackedFlightId=null;if(trafficGroup)clearGroup(trafficGroup);selectedTrafficTrail=null;liveTrafficVisuals.clear();liveTrafficError='';liveTrafficFailure=false;liveTrafficLastSuccess=0;liveTrafficAverageMs=LIVE_TRAFFIC_POLL_MS;liveTrafficAverageSamples=0;renderTrackerLossAlerts();}
+  if(!liveTrafficOn){clearInterval(liveTrafficTimer);liveTrafficTimer=0;liveTrafficAbortController?.abort();liveTrafficTracks.clear();resetTrackedAreaNotificationBaseline();selectedTrackedFlightId=null;expandedTrackedFlightId=null;if(trafficGroup)clearGroup(trafficGroup);selectedTrafficTrail=null;liveTrafficVisuals.clear();liveTrafficError='';liveTrafficFailure=false;liveTrafficLastSuccess=0;liveTrafficLastCompleteSuccess=0;liveTrafficAverageMs=LIVE_TRAFFIC_POLL_MS;liveTrafficAverageSamples=0;renderTrackerLossAlerts();}
   startLiveTraffic();
 }
 function closeTrafficInfo(){document.getElementById('traffic-info')?.classList.remove('show');}
