@@ -1,10 +1,10 @@
 # Activate live traffic on the GitHub Pages site
 
-The GitHub Pages frontend is static. It cannot run `radio-watch-server.js`, and
-the ADS-B/OGN services cannot be called reliably by the browser directly. The
-included Node relay must therefore run at a separate HTTPS origin. The existing
-`render.yaml` deploys that relay, and the existing Pages workflow injects its
-origin into the generated website.
+The GitHub Pages frontend is static and cannot run `radio-watch-server.js`.
+R4DIO DASH now reads the bounded OGN/FLARM feed directly in the browser, so no
+separate service is needed for that traffic. adsb.lol and the METAR providers
+do not expose equivalent browser CORS access. The optional relay in this guide
+adds ADS-B and METAR; skip steps 2–5 if direct OGN traffic is sufficient.
 
 ## 1. Push the current repository
 
@@ -15,7 +15,7 @@ Commit and push the complete `main` branch to:
 The root of the pushed repository must contain `render.yaml`,
 `radio-watch-server.js`, `package.json`, and `.github/workflows/pages.yml`.
 
-## 2. Deploy the relay on Render
+## 2. Optional: deploy the ADS-B/METAR relay on Render
 
 1. Sign in to the Render dashboard.
 2. Select **New → Blueprint**.
@@ -31,7 +31,7 @@ The root of the pushed repository must contain `render.yaml`,
 Use only the origin—do not append `/api`, `/api/live-traffic`, or a trailing
 query string.
 
-## 3. Verify the relay before connecting Pages
+## 3. Optional: verify the relay before connecting Pages
 
 Open these addresses in a browser, replacing the example origin if Render gave
 the service a different one:
@@ -44,7 +44,7 @@ the service a different one:
 must contain `feeds` and `aircraft`; the METAR response must contain `reports`.
 A free service can need a short initial warm-up before the first response.
 
-## 4. Test the relay from the published frontend
+## 4. Optional: test the relay from the published frontend
 
 Before changing the repository setting, open this temporary test URL with the
 real Render origin substituted:
@@ -54,7 +54,7 @@ real Render origin substituted:
 Enable **LIVE**. The tracker statistics should update without an HTTP 404. This
 query parameter is only a test override; the permanent configuration is next.
 
-## 5. Add the GitHub Actions variable
+## 5. Optional: add the GitHub Actions variable
 
 1. Open `https://github.com/t0k-0/r4dio_dash`.
 2. Select **Settings**.
@@ -95,21 +95,26 @@ also trigger this workflow.
 1. Open `https://t0k-0.github.io/r4dio_dash/` without the `apiBase` query.
 2. Hard-refresh the page (`Ctrl+F5`).
 3. Enable **LIVE**.
-4. Open the tracker statistics. ADS-B, OGN, and LOCAL counts should refresh.
-5. In browser developer tools, the traffic request should go to the Render
-   origin's `/api/live-traffic`, not to `github.io/.../api/live-traffic`.
+4. Open the tracker statistics. OGN and LOCAL counts should refresh. ADS-B also
+   refreshes when the optional relay is configured.
+5. In browser developer tools, OGN should load from `live.glidernet.org`. With
+   no relay configured there should be no request to
+   `github.io/.../api/live-traffic`; with one configured, the ADS-B request
+   should go to the relay origin.
 
 ## Troubleshooting
 
-- **Live traffic relay is not configured**: the Actions variable is absent, is
-  misspelled, or Pages was not rebuilt after it was added.
+- **OGN count remains zero**: there may simply be no current OGN targets in the
+  Czech feed. Check the browser network panel for the `lxml.php` response and
+  confirm that a privacy extension or network filter is not blocking it.
 - **traffic API HTTP 404**: an older Pages artifact is still loaded. Rerun the
-  workflow and hard-refresh. Also confirm the variable contains only the relay
-  origin.
+  workflow and hard-refresh; the current static build does not request the
+  nonexistent Pages API route when no relay is configured.
 - **HTTP 502 or partial feed**: the relay is running, but ADS-B or OGN is
   temporarily unavailable. Check the Render logs and retry.
 - **Render health URL is 404**: the wrong Render service or URL was copied.
 - **Works with `?apiBase=...` but not normally**: the relay is healthy; the
   GitHub Actions variable or Pages rebuild is the remaining problem.
-- **Local testing**: run `npm start` and open the exact localhost URL printed by
-  the server. A generic static server does not provide the traffic API.
+- **Local testing**: a generic static server can test direct OGN. Run
+  `npm start` and open the exact localhost URL printed by the server to add
+  local ADS-B and METAR.

@@ -61,6 +61,8 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+button { text-align:center; }
+#add-ac-btn,.modal-close,.pill-btn,.primary-btn,.secondary-btn { display:inline-flex;align-items:center;justify-content:center;line-height:1.1; }
 
 html, body {
   height: 100%;
@@ -70,6 +72,21 @@ html, body {
   font-family: var(--sans);
   font-size: 14px;
 }
+.startup-screen { position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:var(--bg);color:var(--accent2);transition:opacity .18s ease,visibility .18s ease;animation:startup-auto-dismiss .18s ease 1.65s forwards; }
+.startup-screen.dismissed { opacity:0;visibility:hidden;pointer-events:none; }
+.startup-core { display:flex;flex-direction:column;align-items:center;min-width:220px; }
+.startup-icon { width:58px;height:58px;display:block;object-fit:contain;animation:startup-press .46s steps(4,end) both; }
+.startup-title { display:flex;justify-content:center;margin-top:12px;color:currentColor;font:700 22px var(--mono);letter-spacing:3.5px;text-shadow:0 0 10px color-mix(in srgb,currentColor 38%,transparent); }
+.startup-title span { display:inline-block;opacity:0;transform:translateY(7px) scaleY(.72);animation:startup-key .22s steps(3,end) forwards; }
+.startup-title span:nth-child(1){animation-delay:.13s}.startup-title span:nth-child(2){animation-delay:.17s}.startup-title span:nth-child(3){animation-delay:.21s}.startup-title span:nth-child(4){animation-delay:.25s}.startup-title span:nth-child(5){animation-delay:.29s}.startup-title span:nth-child(6){animation-delay:.33s}.startup-title span:nth-child(7){animation-delay:.37s}.startup-title span:nth-child(8){animation-delay:.41s}.startup-title span:nth-child(9){animation-delay:.45s}.startup-title span:nth-child(10){animation-delay:.49s}
+.startup-scan { width:220px;height:4px;display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-top:14px; }
+.startup-scan i { background:currentColor;opacity:.12;animation:startup-segment .17s steps(2,end) forwards; }
+.startup-scan i:nth-child(1){animation-delay:.11s}.startup-scan i:nth-child(2){animation-delay:.16s}.startup-scan i:nth-child(3){animation-delay:.21s}.startup-scan i:nth-child(4){animation-delay:.26s}.startup-scan i:nth-child(5){animation-delay:.31s}.startup-scan i:nth-child(6){animation-delay:.36s}.startup-scan i:nth-child(7){animation-delay:.41s}.startup-scan i:nth-child(8){animation-delay:.46s}.startup-scan i:nth-child(9){animation-delay:.51s}.startup-scan i:nth-child(10){animation-delay:.56s}
+@keyframes startup-press { 0%{opacity:0;transform:scale(1.16)} 35%{opacity:1;transform:scale(.86)} 65%{transform:scale(1.04)} 100%{transform:scale(1)} }
+@keyframes startup-key { 0%{opacity:0;transform:translateY(7px) scaleY(.72)} 62%{opacity:1;transform:translateY(-2px) scaleY(1.08)} 100%{opacity:1;transform:none} }
+@keyframes startup-segment { to{opacity:.9;box-shadow:0 0 7px currentColor} }
+@keyframes startup-auto-dismiss { to{opacity:0;visibility:hidden;pointer-events:none} }
+@media (prefers-reduced-motion:reduce){.startup-icon,.startup-title span,.startup-scan i{animation:none;opacity:1;transform:none}}
 
 /* ─── METAR STRIP ─────────────────────────────── */
 #metar-strip {
@@ -100,9 +117,10 @@ html, body {
 .strip-unit { min-width:0;height:30px;padding:3px 8px;border:1px solid var(--border2);border-radius:4px;background:var(--bg3);display:flex;align-items:center;justify-content:center; }
 .strip-sep { display:none; }
 .strip-sep.site-divider { display:block;width:1px;height:26px;margin:0 5px;background:var(--border2);flex:none; }
-.app-brand { display:flex;align-items:center;gap:6px;height:30px;min-width:0;color:var(--bright);font:700 11px var(--mono);letter-spacing:1px;white-space:nowrap; }
-.app-brand img { width:24px;height:24px;display:block;object-fit:contain; }
-.app-brand img[hidden] { display:none; }
+.header-clock-group,.header-status-group { display:flex;align-items:center;gap:6px;min-width:0; }
+.header-status-group { margin-left:18px; }
+.header-center-logo { position:absolute;left:50%;top:50%;width:25px;height:25px;display:block;object-fit:contain;transform:translate(-50%,-50%);pointer-events:none; }
+.header-center-logo[hidden] { display:none; }
 #metar-pill {
   display: flex;
   align-items: center;
@@ -129,7 +147,6 @@ html, body {
 .top-traffic-content { position:relative;z-index:1;display:flex;align-items:center;gap:5px; }
 .top-local-dot { width:7px;height:7px;border-radius:50%;background:#00d9ff;box-shadow:0 0 6px #00d9ff;flex:none; }
 .top-traffic-stats.zero-local { padding-left:10px;padding-right:10px; }
-.top-traffic-stats.zero-local .top-local-dot { animation:local-zero-blink 1.15s ease-in-out infinite; }
 .tracker-stats-detail { display:none;position:fixed;top:calc(var(--strip-h) + 4px);z-index:520;width:240px;padding:9px;border:1px solid #00d9ff80;border-radius:4px;background:var(--bg2);box-shadow:0 8px 24px #0008;font:10px var(--mono); }
 .tracker-stats-detail.show { display:block; }
 .tracker-stats-title { display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--border);color:var(--bright);font-weight:700;letter-spacing:.6px; }
@@ -137,7 +154,10 @@ html, body {
 .tracker-stats-grid span:nth-child(odd) { color:var(--dim); }
 .tracker-stats-grid span:nth-child(even) { color:var(--bright);text-align:right; }
 .tracker-stats-warning { margin-top:7px;padding:5px 6px;border-left:2px solid var(--orange);background:var(--bg3);color:var(--orange);line-height:1.35;overflow-wrap:anywhere; }
-@keyframes local-zero-blink { 50% { opacity:.2;box-shadow:none; } }
+.tracker-refresh-graphic { margin-top:9px; }
+.tracker-refresh-caption { display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;color:var(--dim);font:8px var(--mono);letter-spacing:.7px;text-transform:uppercase; }
+.tracker-refresh-cycle { position:relative;height:11px;overflow:hidden;border:1px solid color-mix(in srgb,var(--tracker-state-color,#00d9ff) 55%,var(--border2));border-radius:2px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),var(--border2) calc(10% - 1px),var(--border2) 10%); }
+.tracker-refresh-fill { position:absolute;inset:0 auto 0 0;width:0;background:color-mix(in srgb,var(--tracker-state-color,#00d9ff) 36%,transparent);box-shadow:0 0 8px color-mix(in srgb,var(--tracker-state-color,#00d9ff) 45%,transparent);transition:width .92s linear; }
 @keyframes tracker-update-flash { 0%{opacity:0;transform:translateX(-48%)} 24%{opacity:1} 100%{opacity:0;transform:translateX(48%)} }
 #clock-utc, #clock-lt { font-size: 15px; color: var(--bright); font-family: var(--mono); }
 #clock-label-lt, #clock-label-utc { font-size: 9px; color: var(--dim); text-transform: uppercase; }
@@ -148,6 +168,12 @@ html, body {
 .sdr-rx-indicator.receiving strong,.sdr-rx-indicator.silent strong { color:var(--red);animation:sdr-rx-blink .78s steps(2,end) infinite;text-shadow:0 0 6px color-mix(in srgb,var(--red) 65%,transparent); }
 .frequency-divider { width:1px;height:26px;margin:0 2px;background:var(--border2);flex:none; }
 .site-frequency-unit { color:var(--accent2);font:700 15px var(--mono);letter-spacing:2px;white-space:nowrap; }
+.tracker-loss-alerts { position:fixed;top:calc(var(--strip-h) + 7px);right:8px;z-index:540;display:flex;flex-direction:column;gap:5px;width:min(360px,calc(100vw - 16px));pointer-events:none; }
+.tracker-loss-alert { pointer-events:auto;display:grid;grid-template-columns:1fr auto;gap:3px 10px;align-items:center;padding:8px 9px;border:1px solid color-mix(in srgb,var(--orange) 65%,var(--border2));border-left:3px solid var(--orange);border-radius:3px;background:var(--bg2);box-shadow:0 8px 24px #0008;font-family:var(--mono); }
+.tracker-loss-alert strong { overflow:hidden;color:var(--bright);font-size:11px;text-overflow:ellipsis;white-space:nowrap; }
+.tracker-loss-alert span { overflow:hidden;color:var(--orange);font-size:9px;text-overflow:ellipsis;white-space:nowrap; }
+.tracker-loss-alert button { grid-column:2;grid-row:1 / span 2;min-width:48px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--orange);border-radius:3px;background:transparent;color:var(--orange);font:700 9px var(--mono);cursor:pointer; }
+.tracker-loss-alert button:hover { background:color-mix(in srgb,var(--orange) 15%,transparent);color:var(--bright); }
 @keyframes rx-live-pulse { 0%,49% { opacity:1;box-shadow:0 0 7px var(--red); } 50%,100% { opacity:.16;box-shadow:none; } }
 @keyframes sdr-rx-blink { 0%,54% { opacity:1;filter:brightness(1.22); } 55%,100% { opacity:.25;filter:none; } }
 
@@ -656,6 +682,8 @@ html, body {
 .tracked-flight:hover,.tracked-flight.selected { background:var(--row-selected);box-shadow:inset 0 0 0 1px #00d9ff45; }
 .tracked-flight.state-inside { --state-color:var(--green); }
 .tracked-flight.state-outside { --state-color:#2f8fff; }
+.tracked-flight.state-lost { --state-color:var(--orange);opacity:.82; }
+.tracked-flight.state-lost .tracked-flight-summary { background:color-mix(in srgb,var(--orange) 6%,transparent); }
 .tracked-flight.tracker-ground { --state-color:#7f8998;--track-color:#7f8998!important;--track-text:#7f8998!important; }
 .tracked-flight-summary { min-height:29px;display:flex;align-items:center;gap:4px;padding:3px 5px;white-space:nowrap;overflow:hidden; }
 .tracked-flight-call { width:min(92px,22%);min-width:54px;color:var(--state-color);font-size:13px;font-weight:700;letter-spacing:.5px;overflow:hidden;text-overflow:ellipsis; }
@@ -813,7 +841,9 @@ html, body {
   letter-spacing: .8px;
   min-width: 56px;
   height: 48px;
+  line-height: 1;
 }
+.ops-btn > span { width:100%;display:flex;align-items:center;justify-content:center;line-height:1; }
 .ops-btn:hover { border-color: var(--accent2); color: var(--accent2); background: var(--bg3); }
 .ops-btn[hidden] { display:none!important; }
 .radio-launch-btn { border-color:color-mix(in srgb,var(--green) 45%,var(--border2));color:var(--green); }
@@ -821,9 +851,9 @@ html, body {
 .radio-launch-btn .btn-ico { line-height:1; }
 .view-popout-cluster { position:relative;display:flex;align-items:center;height:48px;z-index:4; }
 .view-popout-cluster #view-toggle-btn { position:relative;z-index:3; }
-.detach-wrap { position:absolute;left:calc(100% - 27px);top:50%;z-index:2;display:flex;opacity:0;transform:translateY(-50%);transition:left .16s ease,opacity .13s ease;pointer-events:none; }
-.view-popout-cluster:hover .detach-wrap,.detach-wrap:focus-within,.view-popout-cluster.detach-open .detach-wrap { left:calc(100% - 1px);opacity:1;pointer-events:auto; }
-.detach-btn { width:28px;min-width:28px;height:32px;padding:0;font-size:13px;gap:0; }
+.detach-wrap { position:absolute;left:calc(100% - 30px);top:50%;z-index:2;display:flex;opacity:0;transform:translateY(-50%);transition:left .16s ease,opacity .13s ease;pointer-events:none; }
+.view-popout-cluster:hover .detach-wrap,.detach-wrap:focus-within,.view-popout-cluster.detach-open .detach-wrap { left:calc(100% + 2px);opacity:1;pointer-events:auto; }
+.detach-btn { width:30px;min-width:30px;height:48px;padding:0;border-radius:4px;background:var(--bg3);font:700 13px/1 var(--mono);gap:0; }
 .detach-menu { display:none;position:absolute;left:0;bottom:calc(100% + 6px);z-index:520;width:210px;padding:5px;border:1px solid var(--accent2);border-radius:4px;background:var(--bg2);box-shadow:0 10px 26px #000b; }
 .detach-menu.show { display:block; }
 .detach-menu button { width:100%;display:flex;align-items:center;justify-content:space-between;padding:7px 8px;border:0;border-left:3px solid var(--accent2);background:transparent;color:var(--text);cursor:pointer;font:10px var(--mono);text-align:left; }
@@ -1344,7 +1374,7 @@ html, body {
   font-size:15px;font-weight:700;letter-spacing:1.5px;white-space:nowrap;
 }
 .site-button:hover { border-color:var(--accent);background:var(--bg3); }
-.site-button.strip-unit { background:var(--bg3);border-color:var(--border2);padding:3px 8px; }
+.site-button.strip-unit { justify-content:center;background:var(--bg3);border-color:var(--border2);padding:3px 8px;font-family:var(--mono); }
 .site-button.strip-unit:hover { border-color:var(--accent); }
 .data-banner {
   position:absolute;left:10px;top:10px;z-index:15;max-width:calc(100% - 20px);padding:6px 9px;
@@ -1437,50 +1467,56 @@ html, body {
   #metar-strip { gap:3px;padding:0 4px; }
   .strip-unit { padding-left:5px;padding-right:5px; }
   #metar-age { display:none; }
-  .app-brand-name { display:none; }
+  .header-center-logo { width:20px;height:20px;opacity:.5; }
+  .header-status-group { margin-left:7px; }
 }
 </style>
 </head>
 <body>
 
+<div class="startup-screen" id="startup-screen" role="status" aria-label="R4DIO DASH loading">
+  <div class="startup-core">
+    <img class="startup-icon" id="startup-icon" src="icon_darkmode.svg" alt="">
+    <div class="startup-title" aria-hidden="true"><span>R</span><span>4</span><span>D</span><span>I</span><span>O</span><span>&nbsp;</span><span>D</span><span>A</span><span>S</span><span>H</span></div>
+    <div class="startup-scan" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════════ -->
 <!--  METAR STRIP                                   -->
 <!-- ══════════════════════════════════════════════ -->
 <div id="metar-strip">
-  <div class="app-brand" title="R4DIO DASH">
-    <img id="app-ui-icon" src="icon_darkmode.svg" alt="" onload="this.hidden=false" onerror="this.hidden=true">
-    <span class="app-brand-name">R4DIO DASH</span>
+  <div class="header-clock-group">
+    <div class="clock-block">
+      <span class="clock-label-lt strip-label">LT</span>
+      <span id="clock-lt" class="strip-val">--:--:--</span>
+    </div>
+    <div class="clock-block">
+      <span class="clock-label-utc strip-label">UTC</span>
+      <span id="clock-utc" class="strip-val">--:--:--</span>
+    </div>
   </div>
-  <button class="site-button strip-unit" id="site-selector" onclick="openLocation()" title="Choose monitored waypoint and airspace">
-    <span id="site-code">LKKO</span>
-  </button>
-  <div class="strip-sep site-divider" aria-hidden="true"></div>
-  <div class="clock-block">
-    <span class="clock-label-lt strip-label">LT</span>
-    <span id="clock-lt" class="strip-val">--:--:--</span>
-  </div>
-  <div class="strip-sep"></div>
-  <div class="clock-block">
-    <span class="clock-label-utc strip-label">UTC</span>
-    <span id="clock-utc" class="strip-val">--:--:--</span>
-  </div>
-  <div class="strip-sep"></div>
-
-  <div class="strip-unit" id="metar-pill" onclick="toggleMetarMenu(event)" title="Choose METAR station">
-    <div class="metar-dot"></div>
-    <span class="metar-station-code" id="metar-station-label">LKCV</span>
-    <span id="metar-data" class="strip-val">načítání…</span>
-    <span id="metar-age" style="font-size:10px;color:var(--dim);margin-left:4px;"></span>
-  </div>
-
-  <div class="top-traffic-stats strip-unit" id="traffic-status" role="button" tabindex="0" aria-expanded="false" aria-controls="tracker-stats-detail" aria-live="polite" onclick="toggleTrackerStatsDetail(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTrackerStatsDetail(event)}"></div>
-
-  <div class="top-strip-end">
+  <div class="header-status-group">
+    <div class="strip-unit" id="metar-pill" onclick="toggleMetarMenu(event)" title="Choose METAR station">
+      <div class="metar-dot"></div>
+      <span class="metar-station-code" id="metar-station-label">LKCV</span>
+      <span id="metar-data" class="strip-val">načítání…</span>
+      <span id="metar-age" style="font-size:10px;color:var(--dim);margin-left:4px;"></span>
+    </div>
+    <div class="top-traffic-stats strip-unit" id="traffic-status" role="button" tabindex="0" aria-expanded="false" aria-controls="tracker-stats-detail" aria-live="polite" onclick="toggleTrackerStatsDetail(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTrackerStatsDetail(event)}"></div>
     <div class="sdr-rx-indicator" id="sdr-rx-indicator" title="RTL-SDR receive status" role="status" aria-live="polite"><span>SDR</span><strong id="sdr-rx-state">RX</strong></div>
+  </div>
+  <img class="header-center-logo" id="app-ui-icon" src="icon_darkmode.svg" alt="" onload="this.hidden=false" onerror="this.hidden=true">
+  <div class="top-strip-end">
+    <button class="site-button strip-unit" id="site-selector" onclick="openLocation()" title="Choose monitored waypoint and airspace">
+      <span id="site-code">LKKO</span>
+    </button>
     <div class="frequency-divider" aria-hidden="true"></div>
     <div class="site-frequency-unit strip-unit" id="site-frequency">129.155</div>
   </div>
 </div>
+
+<div class="tracker-loss-alerts" id="tracker-loss-alerts" aria-live="assertive"></div>
 
 <div class="metar-menu" id="metar-menu" onclick="event.stopPropagation()"></div>
 <div class="tracker-stats-detail" id="tracker-stats-detail" onclick="event.stopPropagation()"></div>
@@ -1850,11 +1886,16 @@ html, body {
         <span class="toggle-row-label">ADS-B + Open Glider Network</span>
         <button class="pill-btn active" id="traffic-settings-toggle" onclick="toggleLiveTraffic()">On</button>
       </div>
+      <div class="toggle-row">
+        <span class="toggle-row-label" data-i18n="trackerGroundPath">Ground trail + position estimate</span>
+        <button class="pill-btn active" id="tracker-ground-path-btn" onclick="toggleTrackerGroundPath()">On</button>
+      </div>
+      <div style="margin-top:5px;color:var(--dim);font:10px var(--mono);line-height:1.4;" data-i18n="trackerGroundPathHelp">For the selected aircraft, draws its observed trail on the base plane and projects its present heading ahead.</div>
       <div class="settings-row">
         <span class="settings-row-label" data-i18n="feedStatus">Feed status</span>
         <span class="traffic-settings-status" id="traffic-settings-status">Connecting…</span>
       </div>
-      <div style="margin-top:6px;color:var(--dim);font:10px var(--mono);line-height:1.45;" data-i18n-html="trackerAdvisory">Czech territory only · below FL100 · updates every 10 seconds. <a href="https://adsb.lol/" target="_blank" rel="noopener" style="color:var(--accent2)">adsb.lol</a> supplies ADS-B and <a href="https://live.glidernet.org/" target="_blank" rel="noopener" style="color:var(--accent2)">OGN Live</a> supplies FLARM/OGN. Advisory display only—not suitable for separation or collision avoidance.</div>
+      <div style="margin-top:6px;color:var(--dim);font:10px var(--mono);line-height:1.45;" data-i18n-html="trackerAdvisory">Czech territory only · below FL100 · updates every 10 seconds. <a href="https://live.glidernet.org/" target="_blank" rel="noopener" style="color:var(--accent2)">OGN Live</a> is read directly by the browser; <a href="https://adsb.lol/" target="_blank" rel="noopener" style="color:var(--accent2)">adsb.lol</a> ADS-B is added when a relay is available. Advisory display only—not suitable for separation or collision avoidance.</div>
     </div>
 
     <div class="settings-section">
@@ -2052,8 +2093,12 @@ Object.assign(UI_TEXT.en,{radioStartSilent:'Silent RX',radioStopSilent:'Stop Sil
 Object.assign(UI_TEXT.cz,{radioStartSilent:'Tich\u00fd RX',radioStopSilent:'Zastavit tich\u00fd RX',radioMuteConsent:'Povolit R4DIO DASH ztlumit v\u00fdchoz\u00ed zvuk Windows, kdykoli tich\u00fd RX zachyt\u00ed vys\u00edl\u00e1n\u00ed? Zvuk se obnov\u00ed 8 sekund po skon\u010den\u00ed vys\u00edl\u00e1n\u00ed. Souhlas plat\u00ed pouze pro tuto relaci str\u00e1nky.',radioMuteNotArmed:'Ztlumen\u00ed po\u010d\u00edta\u010de nebylo povoleno; detekce tich\u00e9ho RX z\u016fst\u00e1v\u00e1 aktivn\u00ed.',radioSystemMuteUnavailable:'Ztlumen\u00ed po\u010d\u00edta\u010de vy\u017eaduje Node server R4DIO DASH. Spus\u0165te node radio-watch-server.js a otev\u0159ete p\u0159esnou adresu localhost, kterou vyp\u00ed\u0161e.'});
 Object.assign(UI_TEXT.en,{radioMuteRequested:'MUTE REQUESTED',radioMuteConfirmed:'SYSTEM MUTED / RX',radioMuteReleasing:'RESTORING SYSTEM AUDIO',radioMuteRestored:'SYSTEM AUDIO RESTORED',radioMuteFailed:'MUTE FAILED',radioCooldown:'MUTED / COOLDOWN'});
 Object.assign(UI_TEXT.cz,{radioMuteRequested:'PO\u017dADAVEK NA ZTLUMEN\u00cd',radioMuteConfirmed:'SYST\u00c9M ZTLUMEN / RX',radioMuteReleasing:'OBNOVUJI ZVUK SYST\u00c9MU',radioMuteRestored:'ZVUK SYST\u00c9MU OBNOVEN',radioMuteFailed:'ZTLUMEN\u00cd SELHALO',radioCooldown:'ZTLUMENO / OCHRANN\u00c1 DOBA'});
-Object.assign(UI_TEXT.en,{trackerStatsTitle:'Tracker details',trackerLocalCount:'Local targets',trackerLastUpdate:'Last update',trackerNextUpdate:'Next refresh',trackerFeedHealthy:'Connected'});
-Object.assign(UI_TEXT.cz,{trackerStatsTitle:'Podrobnosti trackeru',trackerLocalCount:'M\u00edstn\u00ed c\u00edle',trackerLastUpdate:'Posledn\u00ed aktualizace',trackerNextUpdate:'Dal\u0161\u00ed aktualizace',trackerFeedHealthy:'P\u0159ipojeno'});
+Object.assign(UI_TEXT.en,{trackerStatsTitle:'Tracker details',trackerLocalCount:'Local targets',trackerFeedHealthy:'Connected'});
+Object.assign(UI_TEXT.en,{trackerCycle:'10-second update cycle',trackerLost:'TRACK LOST',trackerSignalLost:'No new position reports',trackerOutOfRange:'Left the monitored range',acknowledge:'ACK'});
+Object.assign(UI_TEXT.cz,{trackerCycle:'10sekundový cyklus aktualizace',trackerLost:'ZTRÁTA CÍLE',trackerSignalLost:'Bez nových hlášení polohy',trackerOutOfRange:'Opustil sledovaný dosah',acknowledge:'POTVRDIT'});
+Object.assign(UI_TEXT.en,{trackerGroundPath:'Ground trail + position estimate',trackerGroundPathHelp:'For the selected aircraft, draws its observed trail on the base plane and projects its present heading ahead.',trackerAdvisory:'Czech territory only · below FL100 · updates every 10 seconds. <a href="https://live.glidernet.org/" target="_blank" rel="noopener" style="color:var(--accent2)">OGN Live</a> is read directly by the browser; <a href="https://adsb.lol/" target="_blank" rel="noopener" style="color:var(--accent2)">adsb.lol</a> ADS-B is added when a relay is available. Advisory display only—not suitable for separation or collision avoidance.'});
+Object.assign(UI_TEXT.cz,{trackerGroundPath:'Pozemní stopa + odhad polohy',trackerGroundPathHelp:'Pro vybrané letadlo vykreslí pozorovanou stopu na základní rovině a promítne jeho současný směr dopředu.',trackerAdvisory:'Pouze území ČR · pod FL100 · aktualizace každých 10 sekund. <a href="https://live.glidernet.org/" target="_blank" rel="noopener" style="color:var(--accent2)">OGN Live</a> načítá přímo prohlížeč; ADS-B z <a href="https://adsb.lol/" target="_blank" rel="noopener" style="color:var(--accent2)">adsb.lol</a> se doplní, když je dostupný relay. Pouze informativní zobrazení—není určeno k rozstupům ani vyhýbání srážkám.'});
+Object.assign(UI_TEXT.cz,{trackerStatsTitle:'Podrobnosti trackeru',trackerLocalCount:'M\u00edstn\u00ed c\u00edle',trackerFeedHealthy:'P\u0159ipojeno'});
 const storedUiLanguage=localStorage.getItem('radioWatchLanguage');
 let uiLanguage=storedUiLanguage==='en'?'en':'cz';
 function t(key){return UI_TEXT[uiLanguage]?.[key]??UI_TEXT.en[key]??key;}
@@ -2065,9 +2110,10 @@ function applyUiLanguage(rerender=true){
   document.getElementById('lang-en')?.classList.toggle('active',uiLanguage==='en');
   document.getElementById('lang-cz')?.classList.toggle('active',uiLanguage==='cz');
   const themeButton=document.getElementById('theme-btn');if(themeButton)themeButton.textContent=isDark?t('dark'):t('light');
+  syncTrackerGroundPathControl();
   renderSdrSettings();
   if(!rerender)return;
-  syncInactiveAirspaceControls();updateLiveTrafficStatus();render();renderTrackedFlightsDrawer();renderNearbyFrequencyContacts();
+  syncInactiveAirspaceControls();updateLiveTrafficStatus();render();renderTrackedFlightsDrawer();renderTrackerLossAlerts();renderNearbyFrequencyContacts();
 }
 function setUiLanguage(language){
   uiLanguage=language==='cz'?'cz':'en';localStorage.setItem('radioWatchLanguage',uiLanguage);applyUiLanguage();
@@ -2076,6 +2122,7 @@ function syncAppIdentity(){
   const iconPath=isDark?'icon_darkmode.svg':'icon_lightmode.svg';
   const favicon=document.getElementById('app-favicon');if(favicon)favicon.href=iconPath;
   const uiIcon=document.getElementById('app-ui-icon');if(uiIcon){uiIcon.hidden=false;uiIcon.src=iconPath;}
+  const startupIcon=document.getElementById('startup-icon');if(startupIcon)startupIcon.src=iconPath;
   const themeColor=document.getElementById('app-theme-color');if(themeColor)themeColor.content=isDark?'#0b0c0f':'#f0f2f5';
 }
 
@@ -4621,6 +4668,7 @@ function updateSiteInterface(){
 }
 function configureSite(site,airspaceIds,radiusNm,persist){
   resetTrackedAreaNotificationBaseline();
+  if(globalThis.liveTrafficTracks instanceof Map){globalThis.liveTrafficTracks.forEach(track=>{track.wasMonitored=false;delete track.lostState;});renderTrackerLossAlerts();}
   currentSite=site;monitorRadiusNm=radiusNm||35;selectedAirspaceIds=new Set(airspaceIds);
   const stateKey=currentSite.id||currentSite.code||currentSite.name;
   traState=activationStateBySite[stateKey]||(activationStateBySite[stateKey]={});
@@ -4688,7 +4736,7 @@ function openLocation(){
   renderWaypointResults();renderAirspaceChoices();
 }
 function closeLocation(){document.getElementById('location-overlay').classList.remove('show');}
-function openSettings(){ document.getElementById('settings-overlay').classList.add('show'); renderShortcutSettings(); syncAirspaceColorInputs(); syncInactiveAirspaceControls(); updateLiveTrafficStatus(); refreshSdrAvailability(); }
+function openSettings(){ document.getElementById('settings-overlay').classList.add('show'); renderShortcutSettings(); syncAirspaceColorInputs(); syncInactiveAirspaceControls(); syncTrackerGroundPathControl(); updateLiveTrafficStatus(); refreshSdrAvailability(); }
 function closeSettings(){ document.getElementById('settings-overlay').classList.remove('show'); }
 function openPresets() { renderPresetList(); document.getElementById('presets-overlay').classList.add('show'); }
 function closePresets(){ document.getElementById('presets-overlay').classList.remove('show'); }
@@ -4875,10 +4923,13 @@ let inactiveAirspaceHidden = localStorage.getItem('radioWatchActiveAirspaceOnly'
 let mapTileZoom = null;
 let mapRebuildTimer = 0;
 let mapViewportAspect = 1;
-const LIVE_TRAFFIC_POLL_MS=10000,LIVE_TRAFFIC_STALE_MS=35000,LIVE_TRAFFIC_MAX_FT=10000,TRACKER_NEAR_DISTANCE_M=3000;
+const LIVE_TRAFFIC_POLL_MS=10000,LIVE_TRAFFIC_STALE_MS=35000,LIVE_TRAFFIC_MAX_FT=10000,TRACKER_NEAR_DISTANCE_M=3000,TRACKER_PREDICTION_SECONDS=50;
 const LIVE_TRAFFIC_URL=resolveRadioWatchEndpoint('trafficEndpoint','api/live-traffic');
+const LIVE_TRAFFIC_DIRECT_OGN_URL='https://live.glidernet.org/lxml.php?a=0&b=51.2&c=48.35&d=19.1&e=11.8&z=2&y=6';
+let liveTrafficRelayEnabled=Boolean(RADIO_WATCH_QUERY.get('trafficEndpoint')||RADIO_WATCH_API_BASE||(location.protocol!=='file:'&&!/\.github\.io$/i.test(location.hostname)));
 const LIVE_TRAFFIC_STATE_COLORS={inside:0x00e676,outside:0x2f8fff};
 let liveTrafficOn=localStorage.getItem('radioWatchLiveTraffic')==='on';
+let trackerGroundPathOn=localStorage.getItem('radioWatchTrackerGroundPath')!=='off';
 let liveTrafficTimer=0,liveTrafficBusy=false,liveTrafficLastSuccess=0,liveTrafficLastAttempt=0,liveTrafficPollStartedAt=0,liveTrafficError='',liveTrafficFailure=false,liveTrafficAbortController=null;
 let liveTrafficCounts={ADSB:0,OGN:0,visible:0};
 liveTrafficTracks=new Map();
@@ -5149,18 +5200,38 @@ function trackerVolumeStateForTrack(track){
 }
 function trackerMapColor(track){return LIVE_TRAFFIC_STATE_COLORS[trackerVolumeStateForTrack(track).key]||LIVE_TRAFFIC_STATE_COLORS.outside;}
 function trackerQueueRank(item){
-  if(item.hidden)return 4;
-  if(isGroundTrackedFlight(item.track))return 3;
+  if(item.hidden)return 5;
+  if(item.track.lostState)return 3;
+  if(isGroundTrackedFlight(item.track))return 4;
   if(item.volumeState.label==='INSIDE')return 0;
   if(item.volumeState.label==='BELOW')return 1;
   return 2;
 }
+function trackerLossDescription(track){return track?.lostState?.reason==='range'?t('trackerOutOfRange'):t('trackerSignalLost');}
+function renderTrackerLossAlerts(){
+  const host=document.getElementById('tracker-loss-alerts');if(!host)return;
+  const lost=[...liveTrafficTracks.values()].filter(track=>track.lostState);
+  host.innerHTML=lost.map(track=>`<article class="tracker-loss-alert"><strong>${escapeHtml(t('trackerLost'))} · ${escapeHtml(trackedRegistrationLabel(track))}</strong><span>${escapeHtml(trackerLossDescription(track))}</span><button type="button" data-track-id="${escapeHtml(track.id)}" onclick="acknowledgeLostTrack(this.dataset.trackId)">${escapeHtml(t('acknowledge'))}</button></article>`).join('');
+}
+function markTrackedFlightLost(track,reason){
+  if(!track||track.lostState)return;
+  track.lostState={reason,detectedAt:Date.now()};
+  removeTrafficVisual(track.id);if(selectedTrackedFlightId===track.id)clearSelectedTrafficTrail();
+  const identity=trackedRegistrationLabel(track)==='UNIDENT'?(track.callsign||'UNIDENT'):trackedRegistrationLabel(track);
+  showNotification(`${t('trackerLost')} · ${identity}`,trackerLossDescription(track),{tag:`radio-watch-tracker-lost-${track.id}`,requireInteraction:true});
+  renderTrackerLossAlerts();
+}
+function acknowledgeLostTrack(trackId){
+  const id=String(trackId);liveTrafficTracks.delete(id);removeTrafficVisual(id);
+  if(selectedTrackedFlightId===id){selectedTrackedFlightId=null;expandedTrackedFlightId=null;clearSelectedTrafficTrail();closeTrafficInfo();}
+  renderTrackerLossAlerts();renderLiveTraffic();renderTrackedFlightsDrawer();
+}
 function currentMonitoredTracks(){
   const now=Date.now();
   return [...liveTrafficTracks.values()]
-    .filter(track=>now-track.updatedAt<=LIVE_TRAFFIC_STALE_MS)
-    .map(track=>{const relations=trackAirspaceRelations(track),airspaces=relations.filter(relation=>relation.verticalState==='inside'),proximityM=distanceToMonitoredAirspaceBoundaryM(track),poolFollowed=trackerIsPoolFollowed(track);return{track,airspaces,relations,proximityM,poolFollowed,hidden:hiddenTrackerIds.has(track.id),volumeState:trackerVolumeState(relations,airspaces,proximityM,poolFollowed)};})
-    .filter(item=>trackIsInMonitoredDisplay(item.track,item.airspaces,item.relations,item.proximityM))
+    .filter(track=>track.lostState||now-track.updatedAt<=LIVE_TRAFFIC_STALE_MS)
+    .map(track=>{const relations=trackAirspaceRelations(track),airspaces=relations.filter(relation=>relation.verticalState==='inside'),proximityM=distanceToMonitoredAirspaceBoundaryM(track),poolFollowed=trackerIsPoolFollowed(track);return{track,airspaces,relations,proximityM,poolFollowed,hidden:hiddenTrackerIds.has(track.id),volumeState:track.lostState?{key:'lost',label:'LOST',displayLabel:'LOST',description:trackerLossDescription(track)}:trackerVolumeState(relations,airspaces,proximityM,poolFollowed)};})
+    .filter(item=>item.track.lostState||trackIsInMonitoredDisplay(item.track,item.airspaces,item.relations,item.proximityM))
     .sort((a,b)=>trackerQueueRank(a)-trackerQueueRank(b)||b.track.altitudeFt-a.track.altitudeFt||(a.track.callsign||a.track.id).localeCompare(b.track.callsign||b.track.id));
 }
 function trackerAircraftFor(trackId){
@@ -5233,7 +5304,7 @@ function renderTrackedFlightsDrawer(){
   if(!hasTrackedFlights){body.innerHTML='';refreshTrackedFlightAges();return;}
   const renderRow=({track,airspaces,volumeState,hidden})=>{
     const linked=trackerAircraftFor(track.id),airspaceText=volumeState.description;
-    const ground=isGroundTrackedFlight(track),sourceColor=ground?'#7f8998':trafficSourceCss(track.source),textColor=ground?'#7f8998':trafficSourceTextCss(track.source);
+    const lost=Boolean(track.lostState),ground=!lost&&isGroundTrackedFlight(track),sourceColor=lost?'#ff9100':ground?'#7f8998':trafficSourceCss(track.source),textColor=lost?'#ff9100':ground?'#7f8998':trafficSourceTextCss(track.source);
     const emergency=track.emergency&&!/^(?:none|no)$/i.test(track.emergency);
     const aircraftType=[track.aircraftType,track.category].filter(Boolean).join(' / ')||'--';
     const isExpanded=expandedTrackedFlightId===track.id;
@@ -5246,7 +5317,7 @@ function renderTrackedFlightsDrawer(){
         <span class="tracked-summary-type" title="${escapeHtml(aircraftType)}">${escapeHtml(aircraftType)}</span>
         <span class="tracked-summary-alt">${ground?'GND':escapeHtml(formatTrafficAltitude(track.altitudeFt))}</span>
         <span class="tracked-summary-speed">${Number.isFinite(track.groundSpeedKt)?Math.round(track.groundSpeedKt)+' KT':'--'}</span>
-        <button class="tracked-visibility-toggle" onclick="toggleTrackedFlightHidden(event,this.closest('.tracked-flight').dataset.trackId)" aria-pressed="${!hidden}" aria-label="${hidden?t('show'):t('hide')} tracker" title="${hidden?t('show'):t('hide')} tracker"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 9s2.8-4.5 7.5-4.5S16.5 9 16.5 9 13.7 13.5 9 13.5 1.5 9 1.5 9Z"></path><circle cx="9" cy="9" r="2.2"></circle>${hidden?'<path d="M3 3 15 15"></path>':''}</svg><span>${hidden?t('show'):t('hide')}</span></button>
+        ${lost?`<button class="tracked-visibility-toggle" onclick="event.stopPropagation();acknowledgeLostTrack(this.closest('.tracked-flight').dataset.trackId)" aria-label="${t('acknowledge')} ${t('trackerLost')}" title="${t('acknowledge')} ${t('trackerLost')}"><span>${t('acknowledge')}</span></button>`:`<button class="tracked-visibility-toggle" onclick="toggleTrackedFlightHidden(event,this.closest('.tracked-flight').dataset.trackId)" aria-pressed="${!hidden}" aria-label="${hidden?t('show'):t('hide')} tracker" title="${hidden?t('show'):t('hide')} tracker"><svg viewBox="0 0 18 18" aria-hidden="true"><path d="M1.5 9s2.8-4.5 7.5-4.5S16.5 9 16.5 9 13.7 13.5 9 13.5 1.5 9 1.5 9Z"></path><circle cx="9" cy="9" r="2.2"></circle>${hidden?'<path d="M3 3 15 15"></path>':''}</svg><span>${hidden?t('show'):t('hide')}</span></button>`}
         <button class="tracked-detail-toggle" onclick="toggleTrackedFlightDetails(event,this.closest('.tracked-flight').dataset.trackId)" aria-label="${isExpanded?'Collapse':'Expand'} tracker details" title="${isExpanded?'Collapse':'Expand'} details">▾</button>
       </div>
       <div class="tracked-flight-details">
@@ -5267,8 +5338,8 @@ function renderTrackedFlightsDrawer(){
       </div>
     </article>`;
   };
-  const airborne=monitored.filter(item=>!item.hidden&&!isGroundTrackedFlight(item.track));
-  const ground=monitored.filter(item=>!item.hidden&&isGroundTrackedFlight(item.track));
+  const airborne=monitored.filter(item=>!item.hidden&&(item.track.lostState||!isGroundTrackedFlight(item.track)));
+  const ground=monitored.filter(item=>!item.hidden&&!item.track.lostState&&isGroundTrackedFlight(item.track));
   const hidden=monitored.filter(item=>item.hidden);
   const groundGroup=ground.length?`<section class="tracked-ground-group${groundTrackersOpen?' open':''}"><button class="tracked-ground-toggle" onclick="toggleGroundTrackers()" aria-expanded="${groundTrackersOpen}"><span>${t('ground')} TRACKERS</span><span class="tracked-ground-count">${ground.length}</span><span class="tracked-ground-chevron">▾</span></button><div class="tracked-ground-body">${ground.map(renderRow).join('')}</div></section>`:'';
   body.innerHTML=airborne.map(renderRow).join('')+groundGroup+hidden.map(renderRow).join('');
@@ -5278,18 +5349,45 @@ function clearSelectedTrafficTrail(){
   if(!selectedTrafficTrail)return;
   trafficGroup?.remove(selectedTrafficTrail);selectedTrafficTrail.traverse(disposeObject);selectedTrafficTrail=null;
 }
+function syncTrackerGroundPathControl(){
+  const button=document.getElementById('tracker-ground-path-btn');if(!button)return;
+  button.classList.toggle('active',trackerGroundPathOn);button.textContent=trackerGroundPathOn?t('on'):t('off');button.setAttribute('aria-pressed',String(trackerGroundPathOn));
+}
+function toggleTrackerGroundPath(){
+  trackerGroundPathOn=!trackerGroundPathOn;localStorage.setItem('radioWatchTrackerGroundPath',trackerGroundPathOn?'on':'off');syncTrackerGroundPathControl();
+  if(trackerGroundPathOn)updateSelectedTrafficTrail();else clearSelectedTrafficTrail();
+}
+function projectedTrafficPosition(lat,lon,headingDeg,distanceM){
+  const earthRadiusM=6371008.8,angularDistance=distanceM/earthRadiusM,bearing=headingDeg*Math.PI/180,lat1=lat*Math.PI/180,lon1=lon*Math.PI/180;
+  const lat2=Math.asin(Math.sin(lat1)*Math.cos(angularDistance)+Math.cos(lat1)*Math.sin(angularDistance)*Math.cos(bearing));
+  const lon2=lon1+Math.atan2(Math.sin(bearing)*Math.sin(angularDistance)*Math.cos(lat1),Math.cos(angularDistance)-Math.sin(lat1)*Math.sin(lat2));
+  return{lat:lat2*180/Math.PI,lon:((lon2*180/Math.PI+540)%360)-180};
+}
 function updateSelectedTrafficTrail(){
   clearSelectedTrafficTrail();
   const track=liveTrafficTracks.get(String(selectedTrackedFlightId||''));
-  if(!track||hiddenTrackerIds.has(track.id)||isGroundTrackedFlight(track)||!currentSite||!trafficGroup)return;
-  const siteElevationFt=(currentSite.elevationM||0)/FT_TO_M;
+  if(!trackerGroundPathOn||!track||track.lostState||Date.now()-track.updatedAt>LIVE_TRAFFIC_STALE_MS||hiddenTrackerIds.has(track.id)||isGroundTrackedFlight(track)||!currentSite||!trafficGroup)return;
   const samples=(track.history||[]).filter(sample=>Number.isFinite(sample.lat)&&Number.isFinite(sample.lon)&&Number.isFinite(sample.altitudeFt)).slice(-180);
-  if(samples.length<2)return;
-  const points=samples.map(sample=>{const local=AviationData.geoToLocal(sample.lat,sample.lon,currentSite.lat,currentSite.lon);return new THREE.Vector3(local.x,Math.max(60,(sample.altitudeFt-siteElevationFt)*FT_TO_M*V_SCALE),-local.y);});
-  const curve=new THREE.CatmullRomCurve3(points,false,'centripetal');
-  const color=trackerMapColor(track);
-  selectedTrafficTrail=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(8,points.length*3),45,6,false),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.92,depthTest:false,depthWrite:false,fog:false}));
-  selectedTrafficTrail.name='selected-traffic-trail';selectedTrafficTrail.renderOrder=2310;selectedTrafficTrail.frustumCulled=false;trafficGroup.add(selectedTrafficTrail);
+  const color=trackerMapColor(track),groundY=34,group=new THREE.Group();
+  group.name='selected-traffic-ground-trail';group.renderOrder=2310;group.frustumCulled=false;
+  if(samples.length>=2){
+    const points=samples.map(sample=>{const local=AviationData.geoToLocal(sample.lat,sample.lon,currentSite.lat,currentSite.lon);return new THREE.Vector3(local.x,groundY,-local.y);});
+    const curve=points.length===2?new THREE.LineCurve3(points[0],points[1]):new THREE.CatmullRomCurve3(points,false,'centripetal');
+    const historyMesh=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(8,points.length*3),42,6,false),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.94,depthTest:false,depthWrite:false,fog:false}));
+    historyMesh.name='selected-traffic-observed-trail';historyMesh.renderOrder=2310;historyMesh.frustumCulled=false;group.add(historyMesh);
+  }
+  const speedKt=Number(track.groundSpeedKt),heading=Number(track.heading);
+  if(Number.isFinite(speedKt)&&speedKt>2&&Number.isFinite(heading)){
+    const distanceM=Math.min(15000,speedKt*.514444*TRACKER_PREDICTION_SECONDS),estimate=projectedTrafficPosition(track.lat,track.lon,heading,distanceM);
+    const startLocal=AviationData.geoToLocal(track.lat,track.lon,currentSite.lat,currentSite.lon),endLocal=AviationData.geoToLocal(estimate.lat,estimate.lon,currentSite.lat,currentSite.lon);
+    const start=new THREE.Vector3(startLocal.x,groundY+2,-startLocal.y),end=new THREE.Vector3(endLocal.x,groundY+2,-endLocal.y),forecastCurve=new THREE.LineCurve3(start,end);
+    const forecastMesh=new THREE.Mesh(new THREE.TubeGeometry(forecastCurve,Math.max(4,Math.ceil(distanceM/300)),28,6,false),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.48,depthTest:false,depthWrite:false,fog:false}));
+    forecastMesh.name='selected-traffic-position-estimate';forecastMesh.renderOrder=2311;forecastMesh.frustumCulled=false;group.add(forecastMesh);
+    const marker=new THREE.Mesh(new THREE.RingGeometry(105,155,28),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.92,side:THREE.DoubleSide,depthTest:false,depthWrite:false,fog:false}));
+    marker.name='selected-traffic-estimated-position';marker.rotation.x=-Math.PI/2;marker.position.copy(end);marker.renderOrder=2312;marker.frustumCulled=false;group.add(marker);
+  }
+  if(!group.children.length){group.traverse(disposeObject);return;}
+  selectedTrafficTrail=group;trafficGroup.add(selectedTrafficTrail);
 }
 function focusViewportOnTrackedFlight(track){
   if(!track||!currentSite||currentView==='tracker')return;
@@ -5317,22 +5415,51 @@ function syncTrafficInfoForLayout(){
   const track=liveTrafficTracks.get(String(selectedTrackedFlightId||''));
   if(track&&trafficInfoAllowedForLayout())showTrafficInfo(track);else closeTrafficInfo();
 }
+function decodeOgnXmlValue(value){return String(value||'').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');}
+function parseDirectOgnTraffic(xml){
+  const reports=[];
+  for(const match of String(xml||'').matchAll(/<m\s+[^>]*a="([^"]+)"[^>]*\/?\s*>/g)){
+    const fields=decodeOgnXmlValue(match[1]).split(','),lat=Number(fields[0]),lon=Number(fields[1]),altitudeFt=Number(fields[4])*3.280839895;
+    const identifier=String(fields[13]||fields[12]||fields[3]||`${lat}:${lon}`).trim(),rawCallsign=String(fields[3]||identifier).trim(),identifierLike=/^[a-f0-9]{8,}$/i.test(rawCallsign);
+    const track={id:`OGN:${identifier}`,source:'OGN',callsign:identifierLike?rawCallsign.slice(-6).toUpperCase():rawCallsign.toUpperCase(),registration:identifierLike?'':rawCallsign.toUpperCase(),aircraftType:'GLIDER / FLARM',squawk:'',category:'',emergency:'',lat,lon,altitudeFt,heading:Number(fields[7]),groundSpeedKt:Number(fields[8])/1.852,verticalRateFpm:Number(fields[9])*196.850394,receiver:String(fields[11]||''),reportedTime:String(fields[5]||'')};
+    if(Number.isFinite(lat)&&Number.isFinite(lon)&&Number.isFinite(altitudeFt)&&altitudeFt>=-500&&altitudeFt<LIVE_TRAFFIC_MAX_FT&&isInsideCzechTrafficArea(lat,lon))reports.push(track);
+  }
+  return reports;
+}
+async function fetchTrafficRelay(signal){
+  const separator=LIVE_TRAFFIC_URL.includes('?')?'&':'?',response=await fetch(`${LIVE_TRAFFIC_URL}${separator}_=${Date.now()}`,{mode:'cors',cache:'no-store',signal});
+  const payload=await response.json().catch(()=>null);
+  if(!response.ok||!payload){
+    const detail=Object.entries(payload?.feeds||{}).map(([name,state])=>`${name}: ${state.error||'unavailable'}`).join(' · ');
+    const error=new Error(payload?.error||detail||`traffic API HTTP ${response.status}`);
+    if(!RADIO_WATCH_QUERY.get('trafficEndpoint')&&!RADIO_WATCH_API_BASE&&(response.status===404||!payload)){liveTrafficRelayEnabled=false;error.optionalRelayMissing=true;}
+    throw error;
+  }
+  const warnings=Object.entries(payload.feeds||{}).filter(([,state])=>!state.ok).map(([name,state])=>`${name}: ${state.error||'unavailable'}`);
+  return{reports:(payload.aircraft||[]).filter(track=>Number.isFinite(track.lat)&&Number.isFinite(track.lon)&&Number.isFinite(track.altitudeFt)&&track.altitudeFt>=-500&&track.altitudeFt<LIVE_TRAFFIC_MAX_FT&&isInsideCzechTrafficArea(track.lat,track.lon)),warnings};
+}
+async function fetchDirectOgnTraffic(signal){
+  const separator=LIVE_TRAFFIC_DIRECT_OGN_URL.includes('?')?'&':'?',response=await fetch(`${LIVE_TRAFFIC_DIRECT_OGN_URL}${separator}_=${Date.now()}`,{mode:'cors',cache:'no-store',credentials:'omit',signal});
+  if(!response.ok)throw new Error(`OGN HTTP ${response.status}`);
+  return parseDirectOgnTraffic(await response.text());
+}
 async function fetchLiveTraffic(){
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
   liveTrafficAbortController=controller;
   try{
-    const separator=LIVE_TRAFFIC_URL.includes('?')?'&':'?';
-    const response=await fetch(`${LIVE_TRAFFIC_URL}${separator}_=${Date.now()}`,{mode:'cors',cache:'no-store',signal:controller.signal});
-    const payload=await response.json().catch(()=>null);
-    if(!response.ok||!payload){
-      const detail=Object.entries(payload?.feeds||{}).map(([name,state])=>`${name}: ${state.error||'unavailable'}`).join(' · ');
-      throw new Error(payload?.error||detail||`traffic API HTTP ${response.status}`);
+    const relayPromise=liveTrafficRelayEnabled?fetchTrafficRelay(controller.signal):Promise.resolve({reports:[],warnings:[],skipped:true});
+    const [relayResult,ognResult]=await Promise.allSettled([relayPromise,fetchDirectOgnTraffic(controller.signal)]),merged=new Map(),warnings=[];
+    if(ognResult.status==='fulfilled')ognResult.value.forEach(report=>merged.set(report.id,report));
+    if(relayResult.status==='fulfilled'){
+      relayResult.value.reports.forEach(report=>merged.set(report.id,report));
+      const relayWarnings=relayResult.value.warnings||[];
+      warnings.push(...(ognResult.status==='fulfilled'?relayWarnings.filter(warning=>!/^ogn\s*:/i.test(warning)):relayWarnings));
     }
-    const failures=Object.entries(payload.feeds||{}).filter(([,state])=>!state.ok).map(([name,state])=>`${name}: ${state.error||'unavailable'}`);
-    return {
-      reports:(payload.aircraft||[]).filter(track=>Number.isFinite(track.lat)&&Number.isFinite(track.lon)&&Number.isFinite(track.altitudeFt)&&track.altitudeFt>=-500&&track.altitudeFt<LIVE_TRAFFIC_MAX_FT&&isInsideCzechTrafficArea(track.lat,track.lon)),
-      warning:failures.join(' · ')
-    };
+    const relayReports=relayResult.status==='fulfilled'?relayResult.value.reports:[],relayHasOgn=relayReports.some(report=>report.source==='OGN');
+    if(ognResult.status==='rejected'&&!relayHasOgn)warnings.push(`OGN: ${ognResult.reason?.message||'unavailable'}`);
+    if(relayResult.status==='rejected'&&!relayResult.reason?.optionalRelayMissing)warnings.push(`ADS-B relay: ${relayResult.reason?.message||'unavailable'}`);
+    if(ognResult.status==='rejected'&&relayResult.status==='rejected')throw new Error(warnings.join(' · ')||'traffic feeds unavailable');
+    return{reports:[...merged.values()],warning:warnings.join(' · ')};
   } finally {clearTimeout(timeout);if(liveTrafficAbortController===controller)liveTrafficAbortController=null;}
 }
 function formatTrafficAltitude(feet){
@@ -5368,6 +5495,7 @@ function removeTrafficVisual(key){
 }
 function updateTrafficVisual(track){
   if(!trafficGroup||!currentSite)return;
+  if(track.lostState){removeTrafficVisual(track.id);return;}
   if(isGroundTrackedFlight(track)){removeTrafficVisual(track.id);return;}
   if(hiddenTrackerIds.has(track.id)){removeTrafficVisual(track.id);return;}
   if(!trackIsInMonitoredDisplay(track)){removeTrafficVisual(track.id);return;}
@@ -5424,12 +5552,21 @@ function renderLiveTraffic(){
   if(!trafficGroup){renderTrackedFlightsDrawer();return;}
   if(!liveTrafficOn){clearGroup(trafficGroup);selectedTrafficTrail=null;liveTrafficVisuals.clear();liveTrafficCounts.visible=0;updateLiveTrafficStatus();return;}
   const now=Date.now(),eligible=[];
-  for(const [key,track] of liveTrafficTracks){if(now-track.updatedAt>LIVE_TRAFFIC_STALE_MS){liveTrafficTracks.delete(key);removeTrafficVisual(key);}else eligible.push(track);}
+  for(const [key,track] of liveTrafficTracks){
+    if(track.lostState){removeTrafficVisual(key);continue;}
+    if(now-track.updatedAt>LIVE_TRAFFIC_STALE_MS){
+      removeTrafficVisual(key);if(selectedTrackedFlightId===key)clearSelectedTrafficTrail();
+      if(liveTrafficFailure||liveTrafficError)continue;
+      if(track.wasMonitored||trackerIsPoolFollowed(track))markTrackedFlightLost(track,'signal');else{liveTrafficTracks.delete(key);removeTrafficVisual(key);}
+      continue;
+    }
+    eligible.push(track);
+  }
   eligible.forEach(updateTrafficVisual);
   for(const key of [...liveTrafficVisuals.keys()])if(!eligible.some(track=>track.id===key))removeTrafficVisual(key);
   if(selectedTrackedFlightId&&!liveTrafficTracks.has(selectedTrackedFlightId)){selectedTrackedFlightId=null;expandedTrackedFlightId=null;clearSelectedTrafficTrail();closeTrafficInfo();}
   else if(selectedTrackedFlightId){updateSelectedTrafficTrail();const selected=liveTrafficTracks.get(selectedTrackedFlightId);if(document.getElementById('traffic-info')?.classList.contains('show'))showTrafficInfo(selected);}
-  liveTrafficCounts.visible=liveTrafficVisuals.size;updateLiveTrafficStatus();
+  liveTrafficCounts.visible=liveTrafficVisuals.size;renderTrackerLossAlerts();updateLiveTrafficStatus();
 }
 function animateLiveTraffic(){
   liveTrafficVisuals.forEach(root=>{
@@ -5464,10 +5601,10 @@ function flashTrafficStatusUpdate(){
 function renderTrackerStatsDetail(){
   const detail=document.getElementById('tracker-stats-detail');
   if(!detail)return;
-  const age=liveTrafficLastSuccess?`${Math.max(0,Math.round((Date.now()-liveTrafficLastSuccess)/1000))}s`:'—';
-  const elapsed=liveTrafficLastSuccess?Date.now()-liveTrafficLastSuccess:0,next=liveTrafficBusy?'now':`${Math.max(0,Math.ceil((LIVE_TRAFFIC_POLL_MS-elapsed)/1000))}s`;
+  const elapsed=liveTrafficLastSuccess?Math.max(0,Date.now()-liveTrafficLastSuccess):0,cycleProgress=liveTrafficLastSuccess?Math.min(100,elapsed/LIVE_TRAFFIC_POLL_MS*100):0;
   const state=liveTrafficBusy?t('updating'):liveTrafficFailure?t('retrying'):liveTrafficError?t('partial'):t('trackerFeedHealthy');
-  detail.innerHTML=`<div class="tracker-stats-title"><span>${t('trackerStatsTitle')}</span><button class="traffic-close" onclick="closeTrackerStatsDetail()" aria-label="${t('close')}">✕</button></div><div class="tracker-stats-grid"><span>${t('trackerLocalCount')}</span><span>${liveTrafficCounts.visible}</span><span>ADS-B</span><span>${liveTrafficCounts.ADSB}</span><span>OGN / FLARM</span><span>${liveTrafficCounts.OGN}</span><span>${t('feedStatus')}</span><span>${state}</span><span>${t('trackerLastUpdate')}</span><span>${age}</span><span>${t('trackerNextUpdate')}</span><span>${next}</span></div>${liveTrafficError?`<div class="tracker-stats-warning">${escapeHtml(liveTrafficError)}</div>`:''}`;
+  detail.style.setProperty('--tracker-state-color',liveTrafficError?'var(--orange)':'#00d9ff');
+  detail.innerHTML=`<div class="tracker-stats-title"><span>${t('trackerStatsTitle')}</span><button class="traffic-close" onclick="closeTrackerStatsDetail()" aria-label="${t('close')}">✕</button></div><div class="tracker-stats-grid"><span>${t('trackerLocalCount')}</span><span>${liveTrafficCounts.visible}</span><span>ADS-B</span><span>${liveTrafficCounts.ADSB}</span><span>OGN / FLARM</span><span>${liveTrafficCounts.OGN}</span><span>${t('feedStatus')}</span><span>${state}</span></div><div class="tracker-refresh-graphic"><div class="tracker-refresh-caption"><span>${t('trackerCycle')}</span><span>10 S</span></div><div class="tracker-refresh-cycle" role="progressbar" aria-label="${t('trackerCycle')}" aria-valuemin="0" aria-valuemax="10" aria-valuenow="${Math.round(cycleProgress/10)}"><div class="tracker-refresh-fill" style="width:${cycleProgress.toFixed(1)}%"></div></div></div>${liveTrafficError?`<div class="tracker-stats-warning">${escapeHtml(liveTrafficError)}</div>`:''}`;
 }
 function closeTrackerStatsDetail(){
   const detail=document.getElementById('tracker-stats-detail'),status=document.getElementById('traffic-status');
@@ -5514,7 +5651,12 @@ async function pollLiveTraffic(){
   try{
     const result=await fetchLiveTraffic(),reports=result.reports,now=Date.now();liveTrafficError=result.warning;liveTrafficLastSuccess=now;
     liveTrafficFailure=false;
-    reports.forEach(report=>liveTrafficTracks.set(report.id,mergeLiveTrafficReport(report,now)));
+    reports.forEach(report=>{
+      const previous=liveTrafficTracks.get(report.id),track=mergeLiveTrafficReport(report,now),monitored=trackIsInMonitoredDisplay(track);
+      track.wasMonitored=Boolean(previous?.wasMonitored||monitored);liveTrafficTracks.set(report.id,track);
+      if(monitored&&track.lostState){delete track.lostState;renderTrackerLossAlerts();}
+      else if(previous?.wasMonitored&&!monitored&&!trackerIsPoolFollowed(track))markTrackedFlightLost(track,'range');
+    });
     liveTrafficCounts.ADSB=reports.filter(report=>report.source==='ADSB').length;liveTrafficCounts.OGN=reports.filter(report=>report.source==='OGN').length;
     updateTrackedAreaEntryNotifications();
     renderLiveTraffic();flashTrafficStatusUpdate();
@@ -5528,14 +5670,14 @@ function startLiveTraffic(){
 function toggleLiveTraffic(){
   if(trackerMapMode)return;
   liveTrafficOn=!liveTrafficOn;localStorage.setItem('radioWatchLiveTraffic',liveTrafficOn?'on':'off');closeTrafficInfo();
-  if(!liveTrafficOn){clearInterval(liveTrafficTimer);liveTrafficTimer=0;liveTrafficAbortController?.abort();liveTrafficTracks.clear();resetTrackedAreaNotificationBaseline();selectedTrackedFlightId=null;expandedTrackedFlightId=null;if(trafficGroup)clearGroup(trafficGroup);selectedTrafficTrail=null;liveTrafficVisuals.clear();liveTrafficError='';liveTrafficFailure=false;}
+  if(!liveTrafficOn){clearInterval(liveTrafficTimer);liveTrafficTimer=0;liveTrafficAbortController?.abort();liveTrafficTracks.clear();resetTrackedAreaNotificationBaseline();selectedTrackedFlightId=null;expandedTrackedFlightId=null;if(trafficGroup)clearGroup(trafficGroup);selectedTrafficTrail=null;liveTrafficVisuals.clear();liveTrafficError='';liveTrafficFailure=false;renderTrackerLossAlerts();}
   startLiveTraffic();
 }
 function closeTrafficInfo(){document.getElementById('traffic-info')?.classList.remove('show');}
 function showTrafficInfo(track){
   const panel=document.getElementById('traffic-info'),title=document.getElementById('traffic-info-title'),grid=document.getElementById('traffic-info-grid');if(!panel||!track)return;
   title.textContent=trackedRegistrationLabel(track);
-  const relations=trackAirspaceRelations(track),airspaces=relations.filter(relation=>relation.verticalState==='inside'),volumeState=trackerVolumeStateForTrack(track),airspaceText=volumeState.description;
+  const relations=trackAirspaceRelations(track),airspaces=relations.filter(relation=>relation.verticalState==='inside'),volumeState=track.lostState?{label:'LOST',description:trackerLossDescription(track)}:trackerVolumeStateForTrack(track),airspaceText=volumeState.description;
   const emergency=track.emergency&&!/^(?:none|no)$/i.test(track.emergency)?track.emergency.toUpperCase():'—';
   const rows=[['Source',track.source==='ADSB'?'ICAO / ADS-B':'OGN / FLARM'],['Registration',trackedRegistrationLabel(track)],['Aircraft',[track.aircraftType,track.category].filter(Boolean).join(' · ')||'—'],['Squawk',track.squawk||'—'],['Emergency',emergency],['Altitude',`${formatTrafficAltitude(track.altitudeFt)} · ${Math.round(track.altitudeFt)} ft`],['Ground speed',Number.isFinite(track.groundSpeedKt)?`${Math.round(track.groundSpeedKt)} kt`:'—'],['Track',formatTrafficTrack(track.heading)],['Vertical rate',formatTrafficRate(track.verticalRateFpm)],['Airspace',airspaceText],['Position',`${track.lat.toFixed(5)}, ${track.lon.toFixed(5)}`],['Report UTC',track.reportedTime||'—'],['Receiver',track.receiver||'—']];
   rows.unshift(['Traffic type','TRACKER']);
@@ -6190,6 +6332,7 @@ renderTrackedFlightsDrawer();
 
 function applyPopoutMode(){
   const kind=new URLSearchParams(location.search).get('popout');if(!['tracker','map','list'].includes(kind))return;
+  document.getElementById('startup-screen')?.remove();
   document.body.classList.add('popout-mode',`popout-${kind}`);
   applyTopView(kind==='tracker'?'tracker':kind==='list'?'list':'viz');
   document.title=`R4DIO DASH · ${kind==='tracker'?'Tracker':kind==='list'?'Aircraft List':'Map'}`;
@@ -6253,6 +6396,14 @@ document.addEventListener('click', e => {
     closeFtm();
   }
 });
+const startupMinimumUntil=performance.now()+720;
+function dismissStartupScreen(){
+  const screen=document.getElementById('startup-screen');if(!screen)return;
+  screen.classList.add('dismissed');setTimeout(()=>screen.remove(),220);
+}
+function finishStartupScreen(){setTimeout(dismissStartupScreen,Math.max(0,startupMinimumUntil-performance.now()));}
+if(document.readyState==='complete')finishStartupScreen();else window.addEventListener('load',finishStartupScreen,{once:true});
+setTimeout(dismissStartupScreen,1800);
 syncAppIdentity();
 applyUiLanguage();
 </script>

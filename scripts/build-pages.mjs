@@ -60,4 +60,4 @@ await writeFile(path.join(outputRoot, '.nojekyll'), '', 'utf8');
 await cp(indexPath, path.join(outputRoot, '404.html'));
 
 console.log(`R4DIO DASH GitHub Pages bundle created in ${outputRoot}`);
-console.log(apiBase ? `Live-data relay: ${apiBase}` : 'Live-data relay: not configured (static features only)');
+console.log(apiBase ? `Live-data relay: ${apiBase}` : 'Live-data relay: not configured (direct OGN traffic remains available)');
