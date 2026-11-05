@@ -24,6 +24,7 @@
   --border2:   #2e3240;
   --accent:    #0077ff;
   --accent2:   #00c3ff;
+  --tracker-cyan:#00d9ff;
   --green:     #00e676;
   --orange:    #ff9100;
   --red:       #ff3d3d;
@@ -72,21 +73,22 @@ html, body {
   font-family: var(--sans);
   font-size: 14px;
 }
-.startup-screen { position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:var(--bg);color:var(--accent2);transition:opacity .18s ease,visibility .18s ease;animation:startup-auto-dismiss .18s ease 1.65s forwards; }
+.startup-screen { position:fixed;inset:0;z-index:5000;display:grid;place-items:center;background:#0b0c0f;color:#e3e3e3;transition:opacity .18s ease,visibility .18s ease;animation:startup-auto-dismiss .18s ease 1.65s forwards; }
 .startup-screen.dismissed { opacity:0;visibility:hidden;pointer-events:none; }
 .startup-core { display:flex;flex-direction:column;align-items:center;min-width:220px; }
-.startup-icon { width:58px;height:58px;display:block;object-fit:contain;animation:startup-press .46s steps(4,end) both; }
-.startup-title { display:flex;justify-content:center;margin-top:12px;color:currentColor;font:700 22px var(--mono);letter-spacing:3.5px;text-shadow:0 0 10px color-mix(in srgb,currentColor 38%,transparent); }
-.startup-title span { display:inline-block;opacity:0;transform:translateY(7px) scaleY(.72);animation:startup-key .22s steps(3,end) forwards; }
+.startup-icon { width:78px;height:42px;display:block;object-fit:contain;animation:startup-press .46s steps(4,end) both; }
+.startup-title { display:flex;justify-content:center;margin-top:12px;color:currentColor;font:700 22px var(--mono);letter-spacing:3.5px; }
+.startup-title span { display:inline-block;visibility:hidden;transform:translateY(7px) scaleY(.72);animation:startup-key .22s steps(3,end) forwards; }
 .startup-title span:nth-child(1){animation-delay:.13s}.startup-title span:nth-child(2){animation-delay:.17s}.startup-title span:nth-child(3){animation-delay:.21s}.startup-title span:nth-child(4){animation-delay:.25s}.startup-title span:nth-child(5){animation-delay:.29s}.startup-title span:nth-child(6){animation-delay:.33s}.startup-title span:nth-child(7){animation-delay:.37s}.startup-title span:nth-child(8){animation-delay:.41s}.startup-title span:nth-child(9){animation-delay:.45s}.startup-title span:nth-child(10){animation-delay:.49s}
 .startup-scan { width:220px;height:4px;display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-top:14px; }
-.startup-scan i { background:currentColor;opacity:.12;animation:startup-segment .17s steps(2,end) forwards; }
+.startup-scan i { visibility:hidden;background:currentColor;animation:startup-segment .17s steps(2,end) forwards; }
 .startup-scan i:nth-child(1){animation-delay:.11s}.startup-scan i:nth-child(2){animation-delay:.16s}.startup-scan i:nth-child(3){animation-delay:.21s}.startup-scan i:nth-child(4){animation-delay:.26s}.startup-scan i:nth-child(5){animation-delay:.31s}.startup-scan i:nth-child(6){animation-delay:.36s}.startup-scan i:nth-child(7){animation-delay:.41s}.startup-scan i:nth-child(8){animation-delay:.46s}.startup-scan i:nth-child(9){animation-delay:.51s}.startup-scan i:nth-child(10){animation-delay:.56s}
-@keyframes startup-press { 0%{opacity:0;transform:scale(1.16)} 35%{opacity:1;transform:scale(.86)} 65%{transform:scale(1.04)} 100%{transform:scale(1)} }
-@keyframes startup-key { 0%{opacity:0;transform:translateY(7px) scaleY(.72)} 62%{opacity:1;transform:translateY(-2px) scaleY(1.08)} 100%{opacity:1;transform:none} }
-@keyframes startup-segment { to{opacity:.9;box-shadow:0 0 7px currentColor} }
+@keyframes startup-press { 0%{transform:scale(1.16)} 35%{transform:scale(.86)} 65%{transform:scale(1.04)} 100%{transform:scale(1)} }
+@keyframes startup-key { 0%{visibility:hidden;transform:translateY(7px) scaleY(.72)} 1%,62%{visibility:visible;transform:translateY(-2px) scaleY(1.08)} 100%{visibility:visible;transform:none} }
+@keyframes startup-segment { to{visibility:visible} }
 @keyframes startup-auto-dismiss { to{opacity:0;visibility:hidden;pointer-events:none} }
-@media (prefers-reduced-motion:reduce){.startup-icon,.startup-title span,.startup-scan i{animation:none;opacity:1;transform:none}}
+@media (prefers-color-scheme:light){.startup-screen{background:#f0f2f5;color:#1c1c1c}}
+@media (prefers-reduced-motion:reduce){.startup-icon,.startup-title span,.startup-scan i{animation:none;visibility:visible;transform:none}}
 
 /* ─── METAR STRIP ─────────────────────────────── */
 #metar-strip {
@@ -119,8 +121,9 @@ html, body {
 .strip-sep.site-divider { display:block;width:1px;height:26px;margin:0 5px;background:var(--border2);flex:none; }
 .header-clock-group,.header-status-group { display:flex;align-items:center;gap:6px;min-width:0; }
 .header-status-group { margin-left:18px; }
-.header-center-logo { position:absolute;left:50%;top:50%;width:25px;height:25px;display:block;object-fit:contain;transform:translate(-50%,-50%);pointer-events:none; }
+.header-center-logo { position:absolute;left:50%;top:50%;width:48px;height:30px;display:block;object-fit:contain;overflow:visible;transform:translate(-50%,-50%);pointer-events:none; }
 .header-center-logo[hidden] { display:none; }
+.header-data-divider { width:1px;height:24px;margin:0 11px;background:var(--border2);flex:none; }
 #metar-pill {
   display: flex;
   align-items: center;
@@ -138,26 +141,27 @@ html, body {
 #metar-pill.stale .metar-dot { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
 #metar-pill.old   .metar-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
 .metar-station-code { color:var(--bright);font:700 10px var(--mono);letter-spacing:.8px; }
-.top-traffic-stats { --tracker-state-color:#00d9ff;display:none;position:relative;isolation:isolate;overflow:hidden;align-items:center;gap:5px;padding:3px 7px;border:1px solid color-mix(in srgb,var(--tracker-state-color) 45%,transparent);border-radius:4px;background:var(--bg3);color:var(--text);font:700 9px var(--mono);white-space:nowrap;cursor:pointer; }
+.top-traffic-stats { --tracker-state-color:var(--tracker-cyan);display:none;position:relative;isolation:isolate;overflow:hidden;align-items:center;gap:5px;padding:3px 7px;border:1px solid color-mix(in srgb,var(--tracker-state-color) 45%,transparent);border-radius:4px;background:var(--bg3);color:var(--text);font:700 9px var(--mono);white-space:nowrap;cursor:pointer; }
 .top-traffic-stats::before { content:'';position:absolute;z-index:0;inset:-35% -55%;background:linear-gradient(105deg,transparent 30%,color-mix(in srgb,var(--tracker-state-color) 20%,transparent) 48%,color-mix(in srgb,var(--tracker-state-color) 8%,transparent) 58%,transparent 72%);opacity:0;transform:translateX(-48%);pointer-events:none; }
 .top-traffic-stats.refresh-flash::before { animation:tracker-update-flash .78s ease-out; }
 .top-traffic-stats.live { display:flex;color:var(--bright); }
-.top-traffic-stats.warning { --tracker-state-color:var(--orange);display:flex;color:var(--orange); }
+.top-traffic-stats.warning { --tracker-state-color:var(--tracker-cyan);display:flex;color:var(--bright);border-color:color-mix(in srgb,var(--tracker-cyan) 55%,transparent); }
 .top-traffic-stats.error { --tracker-state-color:var(--red);display:flex;color:var(--red); }
 .top-traffic-content { position:relative;z-index:1;display:flex;align-items:center;gap:5px; }
-.top-local-dot { width:7px;height:7px;border-radius:50%;background:#00d9ff;box-shadow:0 0 6px #00d9ff;flex:none; }
+.top-traffic-partial { position:relative;z-index:1;margin-left:2px;padding-left:5px;border-left:1px solid color-mix(in srgb,var(--tracker-cyan) 55%,transparent);color:var(--tracker-cyan);font-size:7px;letter-spacing:.5px; }
+.top-local-dot { width:7px;height:7px;border-radius:50%;background:var(--tracker-cyan);box-shadow:0 0 6px color-mix(in srgb,var(--tracker-cyan) 75%,transparent);flex:none; }
 .top-traffic-stats.zero-local { padding-left:10px;padding-right:10px; }
-.tracker-stats-detail { display:none;position:fixed;top:calc(var(--strip-h) + 4px);z-index:520;width:240px;padding:9px;border:1px solid #00d9ff80;border-radius:4px;background:var(--bg2);box-shadow:0 8px 24px #0008;font:10px var(--mono); }
+.tracker-stats-detail { display:none;position:fixed;top:calc(var(--strip-h) + 4px);z-index:520;width:240px;padding:9px;border:1px solid color-mix(in srgb,var(--tracker-cyan) 55%,transparent);border-radius:4px;background:var(--bg2);box-shadow:0 8px 24px #0008;font:10px var(--mono); }
 .tracker-stats-detail.show { display:block; }
 .tracker-stats-title { display:flex;align-items:center;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--border);color:var(--bright);font-weight:700;letter-spacing:.6px; }
 .tracker-stats-grid { display:grid;grid-template-columns:1fr auto;gap:5px 12px;margin-top:7px; }
 .tracker-stats-grid span:nth-child(odd) { color:var(--dim); }
 .tracker-stats-grid span:nth-child(even) { color:var(--bright);text-align:right; }
-.tracker-stats-warning { margin-top:7px;padding:5px 6px;border-left:2px solid var(--orange);background:var(--bg3);color:var(--orange);line-height:1.35;overflow-wrap:anywhere; }
+.tracker-stats-warning { margin-top:7px;padding:5px 6px;border-left:2px solid var(--accent2);background:var(--bg3);color:var(--mid);line-height:1.35;overflow-wrap:anywhere; }
 .tracker-refresh-graphic { margin-top:9px; }
 .tracker-refresh-caption { display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;color:var(--dim);font:8px var(--mono);letter-spacing:.7px;text-transform:uppercase; }
-.tracker-refresh-cycle { position:relative;height:11px;overflow:hidden;border:1px solid color-mix(in srgb,var(--tracker-state-color,#00d9ff) 55%,var(--border2));border-radius:2px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),var(--border2) calc(10% - 1px),var(--border2) 10%); }
-.tracker-refresh-fill { position:absolute;inset:0 auto 0 0;width:0;background:color-mix(in srgb,var(--tracker-state-color,#00d9ff) 36%,transparent);box-shadow:0 0 8px color-mix(in srgb,var(--tracker-state-color,#00d9ff) 45%,transparent);transition:width .92s linear; }
+.tracker-refresh-cycle { position:relative;height:11px;overflow:hidden;border:1px solid color-mix(in srgb,var(--tracker-state-color,var(--tracker-cyan)) 55%,var(--border2));border-radius:2px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(10% - 1px),var(--border2) calc(10% - 1px),var(--border2) 10%); }
+.tracker-refresh-fill { position:absolute;inset:0 auto 0 0;width:0;background:color-mix(in srgb,var(--tracker-state-color,var(--tracker-cyan)) 36%,transparent);box-shadow:0 0 8px color-mix(in srgb,var(--tracker-state-color,var(--tracker-cyan)) 45%,transparent);transition:width .92s linear; }
 @keyframes tracker-update-flash { 0%{opacity:0;transform:translateX(-48%)} 24%{opacity:1} 100%{opacity:0;transform:translateX(48%)} }
 #clock-utc, #clock-lt { font-size: 15px; color: var(--bright); font-family: var(--mono); }
 #clock-label-lt, #clock-label-utc { font-size: 9px; color: var(--dim); text-transform: uppercase; }
@@ -669,7 +673,7 @@ html, body {
 .tracked-drawer-toggle[hidden],.tracked-drawer[hidden] { display:none; }
 .tracked-drawer-toggle > span { position:relative;z-index:1; }
 .tracked-drawer-title { white-space:nowrap; }
-.tracked-drawer-count { min-width:19px;padding:0 4px;border:1px solid #00d9ff65;border-radius:8px;color:var(--accent2);font-size:8px;text-align:center; }
+.tracked-drawer-count { min-width:19px;padding:0 4px;border:1px solid color-mix(in srgb,var(--tracker-cyan) 48%,transparent);border-radius:8px;color:var(--accent2);font-size:8px;text-align:center; }
 .tracked-drawer-state { margin-left:auto;color:var(--dim);font:9px var(--mono);white-space:nowrap; }
 .tracked-drawer-chevron { color:var(--accent2);font-size:11px;transform:rotate(0);transition:transform .18s ease; }
 .tracked-drawer-toggle[aria-expanded="true"] .tracked-drawer-chevron { transform:rotate(180deg); }
@@ -679,7 +683,7 @@ html, body {
 .tracked-enable { display:block;margin:8px auto 0;border:1px solid var(--accent2);border-radius:3px;background:var(--bg3);color:var(--accent2);padding:4px 8px;cursor:pointer;font:700 9px var(--mono); }
 .tracked-flight { width:100%;display:block;border:0;border-left:3px solid var(--state-color,var(--track-color));border-bottom:1px solid var(--border);background:var(--bg);color:var(--text);padding:0;cursor:pointer;text-align:left;font-family:var(--mono); }
 .tracked-flight:nth-child(even) { background:var(--row-even); }
-.tracked-flight:hover,.tracked-flight.selected { background:var(--row-selected);box-shadow:inset 0 0 0 1px #00d9ff45; }
+.tracked-flight:hover,.tracked-flight.selected { background:var(--row-selected);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tracker-cyan) 38%,transparent); }
 .tracked-flight.state-inside { --state-color:var(--green); }
 .tracked-flight.state-outside { --state-color:#2f8fff; }
 .tracked-flight.state-lost { --state-color:var(--orange);opacity:.82; }
@@ -727,7 +731,7 @@ html, body {
 .tracked-contact-time { min-width:48px;color:var(--mid);font:700 10px var(--mono);text-align:right; }
 .tracked-contact-time.warning { color:var(--orange); }.tracked-contact-time.alert { color:var(--red); }
 .tracked-contact-btn { height:24px;border:1px solid var(--track-color);border-radius:3px;background:var(--bg3);color:var(--track-text);padding:2px 6px;cursor:pointer;font:700 9px var(--mono); }
-.tracker-badge { display:inline-block;margin-right:4px;padding:0 3px;border:1px solid #00d9ff80;border-radius:2px;color:var(--accent2);font:700 7px/12px var(--mono);vertical-align:1px; }
+.tracker-badge { display:inline-block;margin-right:4px;padding:0 3px;border:1px solid color-mix(in srgb,var(--tracker-cyan) 55%,transparent);border-radius:2px;color:var(--accent2);font:700 7px/12px var(--mono);vertical-align:1px; }
 @media (max-width:900px){.tracked-flight-grid{grid-template-columns:repeat(2,minmax(70px,1fr));}.tracked-summary-type{display:none}}
 @container (max-width:600px){.tracked-flight-grid{grid-template-columns:repeat(2,minmax(70px,1fr));}.tracked-summary-type{display:none}.tracked-flight-summary{gap:3px}.tracked-flight-call{width:min(78px,21%)}}
 @container (max-width:440px){.tracked-flight-call{width:min(72px,22%)}}
@@ -851,9 +855,10 @@ html, body {
 .radio-launch-btn .btn-ico { line-height:1; }
 .view-popout-cluster { position:relative;display:flex;align-items:center;height:48px;z-index:4; }
 .view-popout-cluster #view-toggle-btn { position:relative;z-index:3; }
-.detach-wrap { position:absolute;left:calc(100% - 30px);top:50%;z-index:2;display:flex;opacity:0;transform:translateY(-50%);transition:left .16s ease,opacity .13s ease;pointer-events:none; }
-.view-popout-cluster:hover .detach-wrap,.detach-wrap:focus-within,.view-popout-cluster.detach-open .detach-wrap { left:calc(100% + 2px);opacity:1;pointer-events:auto; }
-.detach-btn { width:30px;min-width:30px;height:48px;padding:0;border-radius:4px;background:var(--bg3);font:700 13px/1 var(--mono);gap:0; }
+.detach-wrap { position:absolute;left:100%;top:50%;z-index:2;display:flex;opacity:0;transform:translateY(-50%) scaleX(.72);transform-origin:left center;transition:opacity .1s ease,transform .1s ease;pointer-events:none; }
+.view-popout-cluster:hover .detach-wrap,.detach-wrap:focus-within,.view-popout-cluster.detach-open .detach-wrap { opacity:1;transform:translateY(-50%) scaleX(1);pointer-events:auto; }
+.view-popout-cluster:hover #view-toggle-btn,.view-popout-cluster.detach-open #view-toggle-btn { border-radius:4px 0 0 4px; }
+.detach-btn { width:31px;min-width:31px;height:48px;padding:0;border-left:0;border-radius:0 4px 4px 0;background:var(--bg3);font:700 13px/1 var(--mono);gap:0; }
 .detach-menu { display:none;position:absolute;left:0;bottom:calc(100% + 6px);z-index:520;width:210px;padding:5px;border:1px solid var(--accent2);border-radius:4px;background:var(--bg2);box-shadow:0 10px 26px #000b; }
 .detach-menu.show { display:block; }
 .detach-menu button { width:100%;display:flex;align-items:center;justify-content:space-between;padding:7px 8px;border:0;border-left:3px solid var(--accent2);background:transparent;color:var(--text);cursor:pointer;font:10px var(--mono);text-align:left; }
@@ -1238,7 +1243,7 @@ html, body {
 .tracker-key-row { display:flex;align-items:flex-start;gap:6px;min-width:0; }
 .tracker-key-token { min-width:42px;color:var(--bright);font-weight:700;white-space:nowrap; }
 .tracker-key-swatch { width:9px;height:9px;margin-top:1px;border-radius:50%;flex:0 0 auto;background:var(--tracker-key-color,var(--mid)); }
-.tracker-key-flash { width:28px;height:8px;margin-top:2px;border:1px solid #00d9ff80;border-radius:2px;flex:0 0 auto;background:linear-gradient(105deg,transparent 10%,#00d9ff45 50%,transparent 90%); }
+.tracker-key-flash { width:28px;height:8px;margin-top:2px;border:1px solid color-mix(in srgb,var(--tracker-cyan) 55%,transparent);border-radius:2px;flex:0 0 auto;background:linear-gradient(105deg,transparent 10%,color-mix(in srgb,var(--tracker-cyan) 32%,transparent) 50%,transparent 90%); }
 .settings-key-section { border:1px solid var(--border);border-radius:4px;background:var(--bg3); }
 .settings-key-section > summary { display:flex;align-items:center;justify-content:space-between;padding:9px 10px;color:var(--dim);font:700 11px var(--cond);letter-spacing:1px;text-transform:uppercase;cursor:pointer;list-style:none; }
 .settings-key-section > summary::-webkit-details-marker { display:none; }
@@ -1467,7 +1472,7 @@ html, body {
   #metar-strip { gap:3px;padding:0 4px; }
   .strip-unit { padding-left:5px;padding-right:5px; }
   #metar-age { display:none; }
-  .header-center-logo { width:20px;height:20px;opacity:.5; }
+  .header-center-logo { width:38px;height:25px;opacity:.72; }
   .header-status-group { margin-left:7px; }
 }
 </style>
@@ -1476,7 +1481,7 @@ html, body {
 
 <div class="startup-screen" id="startup-screen" role="status" aria-label="R4DIO DASH loading">
   <div class="startup-core">
-    <img class="startup-icon" id="startup-icon" src="icon_darkmode.svg" alt="">
+    <picture><source media="(prefers-color-scheme: light)" srcset="icon_lightmode.svg"><img class="startup-icon" src="icon_darkmode.svg" alt=""></picture>
     <div class="startup-title" aria-hidden="true"><span>R</span><span>4</span><span>D</span><span>I</span><span>O</span><span>&nbsp;</span><span>D</span><span>A</span><span>S</span><span>H</span></div>
     <div class="startup-scan" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   </div>
@@ -1486,6 +1491,7 @@ html, body {
 <!--  METAR STRIP                                   -->
 <!-- ══════════════════════════════════════════════ -->
 <div id="metar-strip">
+  <div class="sdr-rx-indicator" id="sdr-rx-indicator" title="RTL-SDR receive status" role="status" aria-live="polite"><span>SDR</span><strong id="sdr-rx-state">RX</strong></div>
   <div class="header-clock-group">
     <div class="clock-block">
       <span class="clock-label-lt strip-label">LT</span>
@@ -1496,6 +1502,7 @@ html, body {
       <span id="clock-utc" class="strip-val">--:--:--</span>
     </div>
   </div>
+  <div class="header-data-divider" aria-hidden="true"></div>
   <div class="header-status-group">
     <div class="strip-unit" id="metar-pill" onclick="toggleMetarMenu(event)" title="Choose METAR station">
       <div class="metar-dot"></div>
@@ -1504,7 +1511,6 @@ html, body {
       <span id="metar-age" style="font-size:10px;color:var(--dim);margin-left:4px;"></span>
     </div>
     <div class="top-traffic-stats strip-unit" id="traffic-status" role="button" tabindex="0" aria-expanded="false" aria-controls="tracker-stats-detail" aria-live="polite" onclick="toggleTrackerStatsDetail(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleTrackerStatsDetail(event)}"></div>
-    <div class="sdr-rx-indicator" id="sdr-rx-indicator" title="RTL-SDR receive status" role="status" aria-live="polite"><span>SDR</span><strong id="sdr-rx-state">RX</strong></div>
   </div>
   <img class="header-center-logo" id="app-ui-icon" src="icon_darkmode.svg" alt="" onload="this.hidden=false" onerror="this.hidden=true">
   <div class="top-strip-end">
@@ -1697,6 +1703,7 @@ html, body {
           <a class="useful-link-card" href="https://aim.rlp.cz" target="_blank" rel="noopener noreferrer"><span class="useful-link-main"><span class="useful-link-name">AIM ŘLP ČR</span><span class="useful-link-description" data-i18n="linkAimDescription">AIP, charts, NOTAM and pre-flight information</span></span><span class="useful-link-open" aria-hidden="true">↗</span></a>
           <a class="useful-link-card" href="https://www.aeroklub.cz/memorandum-o-pristavacich-poplatcich/" target="_blank" rel="noopener noreferrer"><span class="useful-link-main"><span class="useful-link-name" data-i18n="linkFees">Landing Fee Memorandum</span><span class="useful-link-description" data-i18n="linkFeesDescription">Aeroklub ČR participating-airfield information</span></span><span class="useful-link-open" aria-hidden="true">↗</span></a>
           <a class="useful-link-card" href="https://windy.com" target="_blank" rel="noopener noreferrer"><span class="useful-link-main"><span class="useful-link-name">Windy</span><span class="useful-link-description" data-i18n="linkWindyDescription">Weather maps and forecast layers</span></span><span class="useful-link-open" aria-hidden="true">↗</span></a>
+          <a class="useful-link-card" href="https://www.flightradar24.com/" target="_blank" rel="noopener noreferrer"><span class="useful-link-main"><span class="useful-link-name">Flightradar24</span><span class="useful-link-description" data-i18n="linkFlightRadarDescription">Public live flight tracking map</span></span><span class="useful-link-open" aria-hidden="true">↗</span></a>
           <a class="useful-link-card" href="https://www.airguru.cz/predletovka" target="_blank" rel="noopener noreferrer"><span class="useful-link-main"><span class="useful-link-name" data-i18n="linkPreflight">AirGuru Pre-flight Briefing</span><span class="useful-link-description" data-i18n="linkPreflightDescription">Czech pre-flight planning resources</span></span><span class="useful-link-open" aria-hidden="true">↗</span></a>
         </div>
       </section>
@@ -1951,11 +1958,11 @@ html, body {
         <div class="tracker-key-row"><span class="tracker-key-token">ADS-B</span><span data-i18n="trackerKeyAdsb">Mode-S / ADS-B reports received</span></div>
         <div class="tracker-key-row"><span class="tracker-key-token">OGN</span><span data-i18n="trackerKeyOgn">OGN / FLARM reports received</span></div>
         <div class="tracker-key-row"><span class="tracker-key-token">LOCAL</span><span data-i18n="trackerKeyLocal">Targets shown around monitored airspace</span></div>
-        <div class="tracker-key-row"><span class="tracker-key-flash" aria-hidden="true"></span><span data-i18n="trackerKeyProgress">A subtle state-coloured flash marks each completed update</span></div>
+        <div class="tracker-key-row"><span class="tracker-key-flash" aria-hidden="true"></span><span data-i18n="trackerKeyProgress">A subtle blue flash marks each completed update</span></div>
         <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:#00e676"></span><span data-i18n="trackerKeyInside">Green: inside monitored airspace</span></div>
         <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:#2196f3"></span><span data-i18n="trackerKeyOutside">Blue: below, above, near or followed</span></div>
         <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:#7f8998"></span><span data-i18n="trackerKeyGround">Grey: ground tracker</span></div>
-        <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:#ff9100"></span><span data-i18n="trackerKeyWarning">Amber status: partial feed or retry</span></div>
+        <div class="tracker-key-row"><span class="tracker-key-swatch" style="--tracker-key-color:var(--tracker-cyan)"></span><span data-i18n="trackerKeyWarning">Blue PARTIAL / RETRY label: one or more feeds are delayed or unavailable</span></div>
       </div>
       <div class="settings-label" style="margin-top:12px;" data-i18n="mapLegend">Map legend</div>
       <div class="settings-legend">
@@ -1967,8 +1974,8 @@ html, body {
         <div class="leg-item"><span class="leg-dot" style="background:var(--as-mtma)"></span>TMA / CTR / ATZ</div>
         <div class="leg-item"><span class="leg-dot" style="background:var(--waypoint-color)"></span>Nearby waypoint</div>
         <div class="leg-item"><span class="leg-dot" style="background:var(--accent)"></span><span id="legend-site">LKKO</span> reference site</div>
-        <div class="leg-item"><span class="leg-dot" style="background:#00d9ff"></span>ADS-B traffic</div>
-        <div class="leg-item"><span class="leg-dot" style="background:#00d9ff"></span>OGN / FLARM traffic</div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--tracker-cyan)"></span>ADS-B traffic</div>
+        <div class="leg-item"><span class="leg-dot" style="background:var(--tracker-cyan)"></span>OGN / FLARM traffic</div>
       </div>
       </div>
     </details>
@@ -2075,8 +2082,8 @@ Object.assign(UI_TEXT.en,{poolName:'Pool name',add:'Add',cancel:'Cancel',operati
 Object.assign(UI_TEXT.cz,{poolName:'Název skupiny',add:'Přidat',cancel:'Zrušit',operationsNotes:'Provozní poznámky',notesPlaceholder:'Zapište poznámky…\n\nPro frekvence, povolení, ATIS a poznámky ke směně…',emergencyContacts:'Tísňové a užitečné kontakty',frequencyNote:'Zobrazuje vybraný prostor a pouze prostory, které se jej dotýkají nebo bezprostředně sousedí (do 1,5 km). Frekvence jsou z přiložených dat; aktuální rozdělení sektorů, aktivaci a postupy ověřte v platném AIP, NOTAM a u odpovědného stanoviště ATS.',registrationPlaceholder:'Poznávací značka (např. OK-ABC)',typePlaceholder:'Typ (volitelně)',airspaceColours:'Barvy vzdušných prostorů',reset:'obnovit',inactiveFlexible:'Neaktivní TRA/TSA/TRA GA',activeTra:'Aktivní TRA',activeTraGa:'Aktivní TRA GA',activeTsa:'Aktivní TSA',dangerRestricted:'Nebezpečný / omezený',otherAirspace:'Ostatní prostor',nearbyWaypoints:'Blízké body',mapLegend:'Legenda mapy',aircraftPresets:'Předvolby letadel',managePresets:'Spravovat předvolby (rychlé přidání)'});
 Object.assign(UI_TEXT.en,{settingsKey:'Key'});
 Object.assign(UI_TEXT.cz,{settingsKey:'Legenda'});
-Object.assign(UI_TEXT.en,{usefulLinks:'Useful Links & Sources',linkRegister:'Czech Aircraft Register',linkRegisterDescription:'Civil Aviation Authority aircraft register',linkAimDescription:'AIP, charts, NOTAM and pre-flight information',linkFees:'Landing Fee Memorandum',linkFeesDescription:'Aeroklub ČR participating-airfield information',linkWindyDescription:'Weather maps and forecast layers',linkPreflight:'AirGuru Pre-flight Briefing',linkPreflightDescription:'Czech pre-flight planning resources'});
-Object.assign(UI_TEXT.cz,{usefulLinks:'Užitečné odkazy a zdroje',linkRegister:'Letecký rejstřík ČR',linkRegisterDescription:'Letecký rejstřík Úřadu pro civilní letectví',linkAimDescription:'AIP, mapy, NOTAM a předletové informace',linkFees:'Memorandum o přistávacích poplatcích',linkFeesDescription:'Informace o zapojených letištích Aeroklubu ČR',linkWindyDescription:'Meteorologické mapy a předpovědní vrstvy',linkPreflight:'AirGuru Předletovka',linkPreflightDescription:'České zdroje pro předletovou přípravu'});
+Object.assign(UI_TEXT.en,{usefulLinks:'Useful Links & Sources',linkRegister:'Czech Aircraft Register',linkRegisterDescription:'Civil Aviation Authority aircraft register',linkAimDescription:'AIP, charts, NOTAM and pre-flight information',linkFees:'Landing Fee Memorandum',linkFeesDescription:'Aeroklub ČR participating-airfield information',linkWindyDescription:'Weather maps and forecast layers',linkFlightRadarDescription:'Public live flight tracking map',linkPreflight:'AirGuru Pre-flight Briefing',linkPreflightDescription:'Czech pre-flight planning resources'});
+Object.assign(UI_TEXT.cz,{usefulLinks:'Užitečné odkazy a zdroje',linkRegister:'Letecký rejstřík ČR',linkRegisterDescription:'Letecký rejstřík Úřadu pro civilní letectví',linkAimDescription:'AIP, mapy, NOTAM a předletové informace',linkFees:'Memorandum o přistávacích poplatcích',linkFeesDescription:'Informace o zapojených letištích Aeroklubu ČR',linkWindyDescription:'Meteorologické mapy a předpovědní vrstvy',linkFlightRadarDescription:'Veřejná mapa živého leteckého provozu',linkPreflight:'AirGuru Předletovka',linkPreflightDescription:'České zdroje pro předletovou přípravu'});
 Object.assign(UI_TEXT.en,{sdrReceiver:'SDR Receiver',sdrDisconnected:'RTL-SDR not connected',sdrDisconnectedDetail:'Select the USB receiver to give this site access.',sdrAvailable:'RTL-SDR permission retained',sdrAvailableDetail:'This browser already knows the receiver. Connect it when ready.',sdrConnecting:'Connecting RTL-SDR',sdrConnectingDetail:'Opening the USB device and claiming its receiver interface…',sdrConnected:'RTL-SDR connected',sdrConnectedDetail:'The USB receiver interface is owned by R4DIO DASH.',sdrUnsupported:'WebUSB unavailable',sdrUnsupportedDetail:'Open R4DIO DASH in Chrome or Edge over HTTPS or localhost.',sdrProduct:'Product',sdrManufacturer:'Manufacturer',sdrUsbId:'USB ID',sdrSerial:'Serial',sdrSelectConnect:'Select / Connect',sdrConnect:'Connect',sdrConnectedButton:'Connected',sdrDisconnect:'Disconnect',sdrForget:'Forget device',sdrHelp:'Requires Chrome or Edge on HTTPS or localhost. Close SDR++ and other programs using the dongle. On Windows, the RTL-SDR interface may need the WinUSB driver; see the <a href="https://www.rtl-sdr.com/V4/" target="_blank" rel="noopener">official V4 guide</a>.',sdrStageNote:'This stage validates the USB connection only. Reception, AM audio and frequency tuning are not active yet.',sdrSelectionCancelled:'No receiver was selected.',sdrDeviceBusy:'The receiver could not be opened. Close SDR++ and other R4DIO DASH windows, then check that the RTL-SDR interface uses WinUSB.',sdrPermissionError:'USB access was blocked. Use HTTPS or localhost, allow the browser prompt, and check the Windows WinUSB driver.',sdrInvalidState:'The receiver changed state while connecting. Unplug it, reconnect it, and try again.',sdrUnknownError:'The receiver connection failed.',sdrDeviceRemoved:'The RTL-SDR was unplugged.',sdrNoInterface:'No compatible RTL-SDR bulk interface was found.',sdrGenericProduct:'RTL-SDR receiver',sdrUnknownManufacturer:'Unknown',sdrForgetUnsupported:'This browser cannot revoke USB permission automatically. Remove the device permission from the browser site settings.'});
 Object.assign(UI_TEXT.cz,{sdrReceiver:'SDR p\u0159ij\u00edma\u010d',sdrDisconnected:'RTL-SDR nen\u00ed p\u0159ipojeno',sdrDisconnectedDetail:'Vyberte USB p\u0159ij\u00edma\u010d a povolte tomuto webu p\u0159\u00edstup.',sdrAvailable:'Opr\u00e1vn\u011bn\u00ed RTL-SDR zachov\u00e1no',sdrAvailableDetail:'Prohl\u00ed\u017ee\u010d ji\u017e p\u0159ij\u00edma\u010d zn\u00e1. P\u0159ipojte jej, a\u017e budete p\u0159ipraveni.',sdrConnecting:'P\u0159ipojov\u00e1n\u00ed RTL-SDR',sdrConnectingDetail:'Otev\u00edr\u00e1 se USB za\u0159\u00edzen\u00ed a zab\u00edr\u00e1 jeho p\u0159ij\u00edmac\u00ed rozhran\u00ed\u2026',sdrConnected:'RTL-SDR p\u0159ipojeno',sdrConnectedDetail:'USB rozhran\u00ed p\u0159ij\u00edma\u010de nyn\u00ed pou\u017e\u00edv\u00e1 R4DIO DASH.',sdrUnsupported:'WebUSB nen\u00ed dostupn\u00e9',sdrUnsupportedDetail:'Otev\u0159ete R4DIO DASH v Chrome nebo Edge p\u0159es HTTPS nebo localhost.',sdrProduct:'Produkt',sdrManufacturer:'V\u00fdrobce',sdrUsbId:'USB ID',sdrSerial:'S\u00e9riov\u00e9 \u010d\u00edslo',sdrSelectConnect:'Vybrat / p\u0159ipojit',sdrConnect:'P\u0159ipojit',sdrConnectedButton:'P\u0159ipojeno',sdrDisconnect:'Odpojit',sdrForget:'Zapomenout za\u0159\u00edzen\u00ed',sdrHelp:'Vy\u017eaduje Chrome nebo Edge p\u0159es HTTPS nebo localhost. Ukon\u010dete SDR++ a dal\u0161\u00ed programy pou\u017e\u00edvaj\u00edc\u00ed p\u0159ij\u00edma\u010d. Ve Windows m\u016f\u017ee rozhran\u00ed RTL-SDR vy\u017eadovat ovlada\u010d WinUSB; viz <a href="https://www.rtl-sdr.com/V4/" target="_blank" rel="noopener">ofici\u00e1ln\u00ed n\u00e1vod V4</a>.',sdrStageNote:'Tato etapa pouze ov\u011b\u0159uje USB p\u0159ipojen\u00ed. P\u0159\u00edjem, AM zvuk a lad\u011bn\u00ed frekvenc\u00ed zat\u00edm nejsou aktivn\u00ed.',sdrSelectionCancelled:'Nebyl vybr\u00e1n \u017e\u00e1dn\u00fd p\u0159ij\u00edma\u010d.',sdrDeviceBusy:'P\u0159ij\u00edma\u010d nelze otev\u0159\u00edt. Ukon\u010dete SDR++ a ostatn\u00ed okna R4DIO DASH a ov\u011b\u0159te, \u017ee rozhran\u00ed RTL-SDR pou\u017e\u00edv\u00e1 WinUSB.',sdrPermissionError:'P\u0159\u00edstup k USB byl zablokov\u00e1n. Pou\u017eijte HTTPS nebo localhost, potvr\u010fte v\u00fdzvu prohl\u00ed\u017ee\u010de a zkontrolujte ovlada\u010d WinUSB.',sdrInvalidState:'Stav p\u0159ij\u00edma\u010de se b\u011bhem p\u0159ipojov\u00e1n\u00ed zm\u011bnil. Odpojte jej, znovu p\u0159ipojte a opakujte pokus.',sdrUnknownError:'P\u0159ipojen\u00ed p\u0159ij\u00edma\u010de selhalo.',sdrDeviceRemoved:'RTL-SDR bylo odpojeno z USB.',sdrNoInterface:'Nebylo nalezeno kompatibiln\u00ed datov\u00e9 rozhran\u00ed RTL-SDR.',sdrGenericProduct:'P\u0159ij\u00edma\u010d RTL-SDR',sdrUnknownManufacturer:'Nezn\u00e1m\u00fd',sdrForgetUnsupported:'Tento prohl\u00ed\u017ee\u010d neum\u00ed automaticky odebrat opr\u00e1vn\u011bn\u00ed USB. Odeberte opr\u00e1vn\u011bn\u00ed za\u0159\u00edzen\u00ed v nastaven\u00ed webu.'});
 Object.assign(UI_TEXT.en,{radio:'RADIO',radioWindowTitle:'R4DIO DASH · RTL-SDR',radioConnected:'CONNECTED',radioLost:'CONNECTION LOST',radioOwned:'The RTL-SDR interface is claimed by the main R4DIO DASH window.',radioLostDetail:'The receiver is no longer connected. Reconnect it from Settings in the main window.',radioDevice:'Receiver',radioMonitoredSite:'Monitored site',radioChannels:'App frequency channels',radioNoChannels:'No frequency is available for the selected airspace.',radioSelectedChannel:'Selected channel · not tuned',radioNoSelection:'— — — . — — —',radioStagePending:'TUNER / AUDIO STAGE PENDING',radioStageHelp:'USB ownership is verified. Channel selection is prepared here, but RF tuning, AM demodulation and audio are not enabled yet.',radioRelease:'Release receiver',radioClose:'Close window'});
@@ -2094,8 +2101,10 @@ Object.assign(UI_TEXT.cz,{radioStartSilent:'Tich\u00fd RX',radioStopSilent:'Zast
 Object.assign(UI_TEXT.en,{radioMuteRequested:'MUTE REQUESTED',radioMuteConfirmed:'SYSTEM MUTED / RX',radioMuteReleasing:'RESTORING SYSTEM AUDIO',radioMuteRestored:'SYSTEM AUDIO RESTORED',radioMuteFailed:'MUTE FAILED',radioCooldown:'MUTED / COOLDOWN'});
 Object.assign(UI_TEXT.cz,{radioMuteRequested:'PO\u017dADAVEK NA ZTLUMEN\u00cd',radioMuteConfirmed:'SYST\u00c9M ZTLUMEN / RX',radioMuteReleasing:'OBNOVUJI ZVUK SYST\u00c9MU',radioMuteRestored:'ZVUK SYST\u00c9MU OBNOVEN',radioMuteFailed:'ZTLUMEN\u00cd SELHALO',radioCooldown:'ZTLUMENO / OCHRANN\u00c1 DOBA'});
 Object.assign(UI_TEXT.en,{trackerStatsTitle:'Tracker details',trackerLocalCount:'Local targets',trackerFeedHealthy:'Connected'});
-Object.assign(UI_TEXT.en,{trackerCycle:'10-second update cycle',trackerLost:'TRACK LOST',trackerSignalLost:'No new position reports',trackerOutOfRange:'Left the monitored range',acknowledge:'ACK'});
-Object.assign(UI_TEXT.cz,{trackerCycle:'10sekundový cyklus aktualizace',trackerLost:'ZTRÁTA CÍLE',trackerSignalLost:'Bez nových hlášení polohy',trackerOutOfRange:'Opustil sledovaný dosah',acknowledge:'POTVRDIT'});
+Object.assign(UI_TEXT.en,{trackerCycle:'Measured update cadence',trackerLastUpdateAgo:'Last update',trackerAverage:'average',trackerLost:'TRACK LOST',trackerSignalLost:'No new position reports',trackerOutOfRange:'Left the monitored range',acknowledge:'ACK'});
+Object.assign(UI_TEXT.cz,{trackerCycle:'Naměřený cyklus aktualizace',trackerLastUpdateAgo:'Poslední aktualizace před',trackerAverage:'průměr',trackerLost:'ZTRÁTA CÍLE',trackerSignalLost:'Bez nových hlášení polohy',trackerOutOfRange:'Opustil sledovaný dosah',acknowledge:'POTVRDIT'});
+Object.assign(UI_TEXT.en,{trackerKeyProgress:'A subtle blue flash marks each completed update',trackerKeyWarning:'Blue PARTIAL / RETRY label: one or more feeds are delayed or unavailable'});
+Object.assign(UI_TEXT.cz,{trackerKeyProgress:'Každou dokončenou aktualizaci označí jemný modrý záblesk',trackerKeyWarning:'Modrý štítek ČÁSTEČNĚ / OPAKOVÁNÍ: jeden či více zdrojů má zpoždění nebo není dostupný'});
 Object.assign(UI_TEXT.en,{trackerGroundPath:'Ground trail + position estimate',trackerGroundPathHelp:'For the selected aircraft, draws its observed trail on the base plane and projects its present heading ahead.',trackerAdvisory:'Czech territory only · below FL100 · updates every 10 seconds. <a href="https://live.glidernet.org/" target="_blank" rel="noopener" style="color:var(--accent2)">OGN Live</a> is read directly by the browser; <a href="https://adsb.lol/" target="_blank" rel="noopener" style="color:var(--accent2)">adsb.lol</a> ADS-B is added when a relay is available. Advisory display only—not suitable for separation or collision avoidance.'});
 Object.assign(UI_TEXT.cz,{trackerGroundPath:'Pozemní stopa + odhad polohy',trackerGroundPathHelp:'Pro vybrané letadlo vykreslí pozorovanou stopu na základní rovině a promítne jeho současný směr dopředu.',trackerAdvisory:'Pouze území ČR · pod FL100 · aktualizace každých 10 sekund. <a href="https://live.glidernet.org/" target="_blank" rel="noopener" style="color:var(--accent2)">OGN Live</a> načítá přímo prohlížeč; ADS-B z <a href="https://adsb.lol/" target="_blank" rel="noopener" style="color:var(--accent2)">adsb.lol</a> se doplní, když je dostupný relay. Pouze informativní zobrazení—není určeno k rozstupům ani vyhýbání srážkám.'});
 Object.assign(UI_TEXT.cz,{trackerStatsTitle:'Podrobnosti trackeru',trackerLocalCount:'M\u00edstn\u00ed c\u00edle',trackerFeedHealthy:'P\u0159ipojeno'});
@@ -2122,7 +2131,6 @@ function syncAppIdentity(){
   const iconPath=isDark?'icon_darkmode.svg':'icon_lightmode.svg';
   const favicon=document.getElementById('app-favicon');if(favicon)favicon.href=iconPath;
   const uiIcon=document.getElementById('app-ui-icon');if(uiIcon){uiIcon.hidden=false;uiIcon.src=iconPath;}
-  const startupIcon=document.getElementById('startup-icon');if(startupIcon)startupIcon.src=iconPath;
   const themeColor=document.getElementById('app-theme-color');if(themeColor)themeColor.content=isDark?'#0b0c0f':'#f0f2f5';
 }
 
@@ -4745,9 +4753,10 @@ function closePresets(){ document.getElementById('presets-overlay').classList.re
 let currentTopView = 'both'; // split, map, list, tracker split, or tracker
 
 // ─── THEME ────────────────────────────────────────────────────────────────
-let isDark = true;
-function toggleTheme() {
-  isDark = !isDark;
+const systemThemeQuery=window.matchMedia('(prefers-color-scheme: light)');
+let themeFollowsSystem=true;
+let isDark=!systemThemeQuery.matches;
+function applyTheme() {
   document.getElementById('theme-btn').textContent = isDark ? t('dark') : t('light');
   document.getElementById('theme-btn').classList.toggle('active', isDark);
   if (!isDark) {
@@ -4756,6 +4765,9 @@ function toggleTheme() {
     document.documentElement.style.setProperty('--bg3',      '#d8dce5');
     document.documentElement.style.setProperty('--border',   '#c4c8d0');
     document.documentElement.style.setProperty('--border2',  '#b0b5c0');
+    document.documentElement.style.setProperty('--accent',   '#005fbd');
+    document.documentElement.style.setProperty('--accent2',  '#005f86');
+    document.documentElement.style.setProperty('--tracker-cyan', '#006784');
     document.documentElement.style.setProperty('--text',     '#1a1d24');
     document.documentElement.style.setProperty('--bright',   '#0a0c10');
     document.documentElement.style.setProperty('--mid',      '#3a4050');
@@ -4780,6 +4792,9 @@ function toggleTheme() {
     document.documentElement.style.setProperty('--bg3',      '#181b22');
     document.documentElement.style.setProperty('--border',   '#252830');
     document.documentElement.style.setProperty('--border2',  '#2e3240');
+    document.documentElement.style.setProperty('--accent',   '#0077ff');
+    document.documentElement.style.setProperty('--accent2',  '#00c3ff');
+    document.documentElement.style.setProperty('--tracker-cyan', '#00d9ff');
     document.documentElement.style.setProperty('--text',     '#cdd2df');
     document.documentElement.style.setProperty('--bright',   '#edf0f7');
     document.documentElement.style.setProperty('--mid',      '#7a859e');
@@ -4803,6 +4818,8 @@ function toggleTheme() {
   applyVizTheme();
   updateRadioInterfaceWindow();
 }
+function toggleTheme(){themeFollowsSystem=false;isDark=!isDark;applyTheme();}
+systemThemeQuery.addEventListener?.('change',event=>{if(!themeFollowsSystem)return;isDark=!event.matches;applyTheme();});
 
 // ── Sync 3D viewer to current dark/light theme ────────────────────────────
 function syncVizScenePalette(){
@@ -4931,6 +4948,7 @@ const LIVE_TRAFFIC_STATE_COLORS={inside:0x00e676,outside:0x2f8fff};
 let liveTrafficOn=localStorage.getItem('radioWatchLiveTraffic')==='on';
 let trackerGroundPathOn=localStorage.getItem('radioWatchTrackerGroundPath')!=='off';
 let liveTrafficTimer=0,liveTrafficBusy=false,liveTrafficLastSuccess=0,liveTrafficLastAttempt=0,liveTrafficPollStartedAt=0,liveTrafficError='',liveTrafficFailure=false,liveTrafficAbortController=null;
+let liveTrafficAverageMs=LIVE_TRAFFIC_POLL_MS,liveTrafficAverageSamples=0;
 let liveTrafficCounts={ADSB:0,OGN:0,visible:0};
 liveTrafficTracks=new Map();
 const liveTrafficVisuals=new Map();
@@ -5601,10 +5619,11 @@ function flashTrafficStatusUpdate(){
 function renderTrackerStatsDetail(){
   const detail=document.getElementById('tracker-stats-detail');
   if(!detail)return;
-  const elapsed=liveTrafficLastSuccess?Math.max(0,Date.now()-liveTrafficLastSuccess):0,cycleProgress=liveTrafficLastSuccess?Math.min(100,elapsed/LIVE_TRAFFIC_POLL_MS*100):0;
+  const elapsed=liveTrafficLastSuccess?Math.max(0,Date.now()-liveTrafficLastSuccess):0,averageMs=Math.max(3000,Math.min(60000,liveTrafficAverageMs)),cycleProgress=liveTrafficLastSuccess?Math.min(100,elapsed/averageMs*100):0,lastUpdateSeconds=liveTrafficLastSuccess?Math.floor(elapsed/1000):0,averageSeconds=(averageMs/1000).toFixed(1);
+  const lastUpdateText=liveTrafficLastSuccess?`${t('trackerLastUpdateAgo')} ${lastUpdateSeconds} s${uiLanguage==='en'?' ago':''}`:`${t('trackerLastUpdateAgo')} —`;
   const state=liveTrafficBusy?t('updating'):liveTrafficFailure?t('retrying'):liveTrafficError?t('partial'):t('trackerFeedHealthy');
-  detail.style.setProperty('--tracker-state-color',liveTrafficError?'var(--orange)':'#00d9ff');
-  detail.innerHTML=`<div class="tracker-stats-title"><span>${t('trackerStatsTitle')}</span><button class="traffic-close" onclick="closeTrackerStatsDetail()" aria-label="${t('close')}">✕</button></div><div class="tracker-stats-grid"><span>${t('trackerLocalCount')}</span><span>${liveTrafficCounts.visible}</span><span>ADS-B</span><span>${liveTrafficCounts.ADSB}</span><span>OGN / FLARM</span><span>${liveTrafficCounts.OGN}</span><span>${t('feedStatus')}</span><span>${state}</span></div><div class="tracker-refresh-graphic"><div class="tracker-refresh-caption"><span>${t('trackerCycle')}</span><span>10 S</span></div><div class="tracker-refresh-cycle" role="progressbar" aria-label="${t('trackerCycle')}" aria-valuemin="0" aria-valuemax="10" aria-valuenow="${Math.round(cycleProgress/10)}"><div class="tracker-refresh-fill" style="width:${cycleProgress.toFixed(1)}%"></div></div></div>${liveTrafficError?`<div class="tracker-stats-warning">${escapeHtml(liveTrafficError)}</div>`:''}`;
+  detail.style.setProperty('--tracker-state-color','var(--tracker-cyan)');
+  detail.innerHTML=`<div class="tracker-stats-title"><span>${t('trackerStatsTitle')}</span><button class="traffic-close" onclick="closeTrackerStatsDetail()" aria-label="${t('close')}">✕</button></div><div class="tracker-stats-grid"><span>${t('trackerLocalCount')}</span><span>${liveTrafficCounts.visible}</span><span>ADS-B</span><span>${liveTrafficCounts.ADSB}</span><span>OGN / FLARM</span><span>${liveTrafficCounts.OGN}</span><span>${t('feedStatus')}</span><span>${state}</span></div><div class="tracker-refresh-graphic"><div class="tracker-refresh-caption"><span>${lastUpdateText}</span><span>${averageSeconds} s ${t('trackerAverage')}</span></div><div class="tracker-refresh-cycle" role="progressbar" aria-label="${t('trackerCycle')}" aria-valuemin="0" aria-valuemax="${Math.round(averageMs)}" aria-valuenow="${Math.round(Math.min(elapsed,averageMs))}"><div class="tracker-refresh-fill" style="width:${cycleProgress.toFixed(1)}%"></div></div></div>${liveTrafficError?`<div class="tracker-stats-warning">${escapeHtml(liveTrafficError)}</div>`:''}`;
 }
 function closeTrackerStatsDetail(){
   const detail=document.getElementById('tracker-stats-detail'),status=document.getElementById('traffic-status');
@@ -5632,7 +5651,7 @@ function updateLiveTrafficStatus(){
   if(!liveTrafficOn){status.style.display='none';status.textContent='';status.className='top-traffic-stats strip-unit';closeTrackerStatsDetail();if(settingsStatus)settingsStatus.textContent=t('disabled');renderTrackedFlightsDrawer();return;}
   status.style.display='flex';
   const age=liveTrafficLastSuccess?Math.round((Date.now()-liveTrafficLastSuccess)/1000):null;
-  status.innerHTML=`<span class="top-traffic-content"><span class="top-local-dot"></span>${liveTrafficCounts.visible?`<span>${liveTrafficCounts.visible} LOCAL</span>`:''}</span>`;
+  status.innerHTML=`<span class="top-traffic-content"><span class="top-local-dot"></span>${liveTrafficCounts.visible?`<span>${liveTrafficCounts.visible} LOCAL</span>`:''}</span>${liveTrafficError?`<span class="top-traffic-partial">${liveTrafficFailure?t('retrying'):t('partial')}</span>`:''}`;
   status.className=`top-traffic-stats strip-unit ${liveTrafficError?'warning':'live'}${liveTrafficCounts.visible?'':' zero-local'}`;
   updateTrafficRefreshTimer();
   if(document.getElementById('tracker-stats-detail')?.classList.contains('show'))renderTrackerStatsDetail();
@@ -5649,7 +5668,9 @@ async function pollLiveTraffic(){
   if(!liveTrafficOn||document.hidden||liveTrafficBusy)return;
   liveTrafficBusy=true;liveTrafficLastAttempt=Date.now();liveTrafficPollStartedAt=liveTrafficLastAttempt;
   try{
-    const result=await fetchLiveTraffic(),reports=result.reports,now=Date.now();liveTrafficError=result.warning;liveTrafficLastSuccess=now;
+    const result=await fetchLiveTraffic(),reports=result.reports,now=Date.now(),previousSuccess=liveTrafficLastSuccess;liveTrafficError=result.warning;
+    if(previousSuccess){const interval=now-previousSuccess;if(interval>=3000&&interval<=60000){liveTrafficAverageSamples=Math.min(12,liveTrafficAverageSamples+1);liveTrafficAverageMs+=(interval-liveTrafficAverageMs)/liveTrafficAverageSamples;}}
+    liveTrafficLastSuccess=now;
     liveTrafficFailure=false;
     reports.forEach(report=>{
       const previous=liveTrafficTracks.get(report.id),track=mergeLiveTrafficReport(report,now),monitored=trackIsInMonitoredDisplay(track);
@@ -5670,7 +5691,7 @@ function startLiveTraffic(){
 function toggleLiveTraffic(){
   if(trackerMapMode)return;
   liveTrafficOn=!liveTrafficOn;localStorage.setItem('radioWatchLiveTraffic',liveTrafficOn?'on':'off');closeTrafficInfo();
-  if(!liveTrafficOn){clearInterval(liveTrafficTimer);liveTrafficTimer=0;liveTrafficAbortController?.abort();liveTrafficTracks.clear();resetTrackedAreaNotificationBaseline();selectedTrackedFlightId=null;expandedTrackedFlightId=null;if(trafficGroup)clearGroup(trafficGroup);selectedTrafficTrail=null;liveTrafficVisuals.clear();liveTrafficError='';liveTrafficFailure=false;renderTrackerLossAlerts();}
+  if(!liveTrafficOn){clearInterval(liveTrafficTimer);liveTrafficTimer=0;liveTrafficAbortController?.abort();liveTrafficTracks.clear();resetTrackedAreaNotificationBaseline();selectedTrackedFlightId=null;expandedTrackedFlightId=null;if(trafficGroup)clearGroup(trafficGroup);selectedTrafficTrail=null;liveTrafficVisuals.clear();liveTrafficError='';liveTrafficFailure=false;liveTrafficLastSuccess=0;liveTrafficAverageMs=LIVE_TRAFFIC_POLL_MS;liveTrafficAverageSamples=0;renderTrackerLossAlerts();}
   startLiveTraffic();
 }
 function closeTrafficInfo(){document.getElementById('traffic-info')?.classList.remove('show');}
@@ -6250,11 +6271,34 @@ function setTrackerMapMode(enabled){
 }
 
 function setupMouseControls(el){
-  let lx=0,ly=0;
-  el.addEventListener('mousedown',e=>{isDragging=true;dragMode=isPlanView()||e.button===2?'pan':'rotate';lx=e.clientX;ly=e.clientY;e.preventDefault();});
-  el.addEventListener('contextmenu',e=>e.preventDefault());
-  window.addEventListener('mousemove',e=>{
+  let lx=0,ly=0,activePointerId=null,activeButton=0;
+  el.style.touchAction='none';
+  const finishDrag=event=>{
     if(!isDragging)return;
+    if(event?.pointerId!=null&&activePointerId!=null&&event.pointerId!==activePointerId)return;
+    const rebuildMap=dragMode==='pan';
+    const pointerId=activePointerId;
+    isDragging=false;dragMode=null;activePointerId=null;activeButton=0;
+    if(pointerId!=null&&el.hasPointerCapture?.(pointerId)){
+      try{el.releasePointerCapture(pointerId);}catch(error){}
+    }
+    if(rebuildMap&&mapLayerOn)rebuildMapLayer();
+  };
+  el.addEventListener('pointerdown',e=>{
+    if(e.button!==0&&e.button!==1&&e.button!==2)return;
+    if(isDragging)finishDrag();
+    activePointerId=e.pointerId;activeButton=e.button;
+    isDragging=true;dragMode=isPlanView()||e.button===1||e.button===2||e.shiftKey?'pan':'rotate';lx=e.clientX;ly=e.clientY;
+    try{el.setPointerCapture(e.pointerId);}catch(error){}
+    e.preventDefault();
+  });
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+  el.addEventListener('auxclick',e=>e.preventDefault());
+  el.addEventListener('dragstart',e=>e.preventDefault());
+  el.addEventListener('pointermove',e=>{
+    if(!isDragging||e.pointerId!==activePointerId)return;
+    const requiredButtonMask=activeButton===2?2:activeButton===1?4:1;
+    if((e.buttons&requiredButtonMask)===0){finishDrag(e);return;}
     const dx=e.clientX-lx,dy=e.clientY-ly;
     if(currentView==='iso'&&dragMode==='rotate'){
       camAngleH=(camAngleH-dx*.01)%(Math.PI*2);if(camAngleH<0)camAngleH+=Math.PI*2;
@@ -6269,7 +6313,12 @@ function setupMouseControls(el){
     }
     lx=e.clientX;ly=e.clientY;updateCameraPosition();
   });
-  window.addEventListener('mouseup',()=>{const rebuildMap=isDragging&&dragMode==='pan';isDragging=false;if(rebuildMap&&mapLayerOn)rebuildMapLayer();});
+  el.addEventListener('pointerup',finishDrag);
+  el.addEventListener('pointercancel',finishDrag);
+  el.addEventListener('lostpointercapture',finishDrag);
+  window.addEventListener('pointerup',finishDrag);
+  window.addEventListener('blur',()=>finishDrag());
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)finishDrag();});
   el.addEventListener('wheel',e=>{
     e.preventDefault();
     const previousZoom=mapTileZoom;
@@ -6404,7 +6453,7 @@ function dismissStartupScreen(){
 function finishStartupScreen(){setTimeout(dismissStartupScreen,Math.max(0,startupMinimumUntil-performance.now()));}
 if(document.readyState==='complete')finishStartupScreen();else window.addEventListener('load',finishStartupScreen,{once:true});
 setTimeout(dismissStartupScreen,1800);
-syncAppIdentity();
+applyTheme();
 applyUiLanguage();
 </script>
 </body>
