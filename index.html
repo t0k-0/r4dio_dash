@@ -8,7 +8,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" id="app-theme-color" content="#0b0c0f">
 <meta name="application-name" content="R4DIO DASH">
-<link rel="icon" id="app-favicon" type="image/svg+xml" sizes="any" href="icon_darkmode.svg">
+<link rel="icon" type="image/svg+xml" sizes="any" href="icon_darkmode.svg">
+<link rel="icon" id="app-favicon" type="image/png" sizes="64x64" href="favicon_darkmode.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2133,7 +2135,8 @@ function setUiLanguage(language){
 }
 function syncAppIdentity(){
   const iconPath=isDark?'icon_darkmode.svg':'icon_lightmode.svg';
-  const favicon=document.getElementById('app-favicon');if(favicon)favicon.href=iconPath;
+  const faviconPath=isDark?'favicon_darkmode.png':'favicon_lightmode.png';
+  const favicon=document.getElementById('app-favicon');if(favicon)favicon.href=faviconPath;
   const uiIcon=document.getElementById('app-ui-icon');if(uiIcon){uiIcon.hidden=false;uiIcon.src=iconPath;}
   const themeColor=document.getElementById('app-theme-color');if(themeColor)themeColor.content=isDark?'#0b0c0f':'#f0f2f5';
 }

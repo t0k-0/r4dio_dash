@@ -17,7 +17,15 @@ const requiredFiles = [
   'CZ_low_plus_CE_26-04-01.cub',
   'enr_1_en.pdf'
 ];
-const optionalFiles = ['icon_darkmode.svg', 'icon_lightmode.svg'];
+const optionalFiles = [
+  'icon_darkmode.svg',
+  'icon_lightmode.svg',
+  'favicon_darkmode.png',
+  'favicon_lightmode.png',
+  'apple-touch-icon.png',
+  'app-icon-192.png',
+  'app-icon-512.png'
+];
 
 async function exists(filePath) {
   try {
